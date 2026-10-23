@@ -1,5 +1,6 @@
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {parseTrustedProxies} from './http-security.mjs';
 
 export function databasePath(env=process.env){
  return resolve(env.DATA_DIR||fileURLToPath(new URL('../data/',import.meta.url)),'rhythm.sqlite');
@@ -19,5 +20,7 @@ export function loadConfig(env=process.env){
  if(!['127.0.0.1','0.0.0.0','::'].includes(host)||(!production&&host!=='127.0.0.1'))throw new Error('Публичный HOST разрешён только в production с HTTPS и обратным прокси.');
  const publicOrigin=production?validatePublicOrigin(env.APP_ORIGIN):null;
  if(!production&&env.APP_ORIGIN)throw new Error('APP_ORIGIN используется только с NODE_ENV=production.');
- return {production,host,port,publicOrigin,path:databasePath(env)};
+ const trustedProxies=parseTrustedProxies(env.TRUSTED_PROXY_IPS||'');
+ if(!production&&trustedProxies.length)throw new Error('TRUSTED_PROXY_IPS используется только в production.');
+ return {production,host,port,publicOrigin,trustedProxies,path:databasePath(env)};
 }

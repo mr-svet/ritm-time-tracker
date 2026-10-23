@@ -8,6 +8,7 @@ services:
       HOST: 0.0.0.0
       PORT: "4173"
       APP_ORIGIN: ${APP_ORIGIN:?Set the HTTPS origin in Dokploy}
+      TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       DATA_DIR: /app/data
       BACKUP_DIR: /app/backups

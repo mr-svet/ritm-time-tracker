@@ -97,3 +97,13 @@ A verified SQLite backup was created before deployment. Deployment completed suc
 Перед публикацией через Dokploy создана и проверена резервная копия SQLite: `rhythm-2026-10-20T08-05-09-674Z-2cd0a0de.sqlite`. Адрес Git-репозитория в Dokploy обновлён на `mr-svet/ritm`.
 
 Выпуск `db5569e` (включает изменения `c2d554a`) завершён в Dokploy со статусом Done. Контейнер `rhythm-rhythm-xqgpwf-rhythm-1` работает и healthy. На публичном HTTPS сайте проверены прямые адреса `/today` и `/journal`, русский язык по умолчанию и наличие переключателя языка на форме входа. Полный интерфейс владельца на опубликованной версии не проверялся; светлая «Картина дня», выбор пейзажа и Алматы проверены локально на синтетических данных. Приватные записи не затрагивались проверкой выпуска.
+# Security hardening — 23.10.2026
+
+- Container runtime: Node.js 24.22.1 (October security release).
+- Authentication JSON is limited to 4 KiB; only the authenticated journal update accepts the existing 12 MiB journal budget plus its envelope.
+- Login attempts are reserved before reading the body, including parallel requests. Rate-limit memory is bounded and expired buckets are removed.
+- `TRUSTED_PROXY_IPS` is empty by default. Set it in Dokploy to the exact Traefik IP on the application's Docker network. Only requests from these peers may use the rightmost `X-Forwarded-For` address. Never list arbitrary clients, entire private networks or `0.0.0.0`.
+- Verify the Traefik peer address again if its container or network is recreated. A changed peer fails closed to the socket address; it does not trust forwarded headers automatically.
+- Keep port 4173 unpublished and the administration panel accessible through the SSH tunnel. Preserve both existing named data/backup volumes during deployment.
+- Deployment and live host verification must be recorded separately after the tunnel is available. A local test run is not evidence of host firewall, SSH configuration or off-server backups.
+

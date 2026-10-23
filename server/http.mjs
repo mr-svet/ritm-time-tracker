@@ -6,19 +6,32 @@ import {JournalDB,AppError,digest,secret,verifyPassword} from './database.mjs';
 import {LIMITS} from '../domain.mjs';
 import {securityHeaders,contentPolicy} from '../tools/security.mjs';
 import {validatePublicOrigin} from './config.mjs';
+import {clientAddress,parseTrustedProxies} from './http-security.mjs';
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const files=new Set(['index.html','app.mjs','domain.mjs','storage.mjs','remote.mjs','i18n.mjs','styles.css','favicon.svg','assets/github-preview.svg','assets/rhythm-forest.png','assets/scenes/dawn.jpg','assets/scenes/mountains.jpg','assets/scenes/lake.jpg','assets/scenes/meadow.jpg','assets/scenes/coast.jpg']);
 const pages=new Set(['/','/today','/journal','/stats','/trends','/settings']);
 const types={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg'};
-async function body(req){
+async function body(req,maxBytes=4096){
  if(req.headers['content-type']!=='application/json')throw new AppError(415,'Ожидается application/json.');
- let bytes=0;const chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>LIMITS.bytes+4096)throw new AppError(413,'Слишком большой запрос.');chunks.push(chunk);}
- try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new AppError(400,'Некорректный JSON.');}
+ const declared=req.headers['content-length'];
+ if(declared!==undefined&&(!/^\d+$/.test(declared)||Number(declared)>maxBytes))throw new AppError(413,'Слишком большой запрос.');
+ let bytes=0;const chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>maxBytes)throw new AppError(413,'Слишком большой запрос.');chunks.push(chunk);}
+ let input;try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new AppError(400,'Некорректный JSON.');}
+ if(input===null||typeof input!=='object'||Array.isArray(input))throw new AppError(400,'Ожидается объект JSON.');
+ return input;
 }
-export function createAppServer({db,bot=null,publicOrigin=null}={}){
+export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]}={}){
  if(publicOrigin)publicOrigin=validatePublicOrigin(publicOrigin);
+ trustedProxies=parseTrustedProxies(trustedProxies.join(','));
  const cookieName=publicOrigin?'__Host-ritm_session':'ritm_session',secure=publicOrigin?'; Secure':'';
  const failures=new Map();let lastCleanup=0;
+ const reserve=(key,limit,at,message)=>{
+  const previous=failures.get(key),rate=previous?.until>at?previous:{count:0,until:at+900000};
+  if(rate.count>=limit)throw new AppError(429,message);
+  if(!failures.has(key)&&failures.size>=10000)throw new AppError(503,'Вход временно перегружен. Повторите позже.');
+  // Reserve before awaiting the body so parallel requests cannot bypass the limit.
+  rate.count++;failures.set(key,rate);
+ };
  const server=createServer(async(req,res)=>{
   for(const [key,value] of Object.entries(securityHeaders(contentPolicy().replace("connect-src 'none'","connect-src 'self'"))))res.setHeader(key,value);
   if(publicOrigin)res.setHeader('Strict-Transport-Security','max-age=86400');
@@ -44,15 +57,14 @@ export function createAppServer({db,bot=null,publicOrigin=null}={}){
    }
    if(!['GET','POST','PUT','DELETE'].includes(req.method))throw new AppError(405,'Метод не поддерживается.');
    if(path==='/api/health'&&req.method==='GET'){db.sql.prepare('SELECT 1').get();return json(200,{ok:true});}
-   const at=Date.now();if(at-lastCleanup>60000){db.cleanup(at);lastCleanup=at;}
+   const at=Date.now();if(at-lastCleanup>60000){db.cleanup(at);for(const [key,rate] of failures)if(rate.until<=at)failures.delete(key);lastCleanup=at;}
+   const address=clientAddress(req,trustedProxies);
    const token=new RegExp('(?:^|;\\s*)'+cookieName+'=([a-zA-Z0-9_-]{43})(?:;|$)').exec(req.headers.cookie||'')?.[1];
    const session=token?(db.sql.prepare("SELECT csrf,'owner' role FROM sessions WHERE hash=? AND expires>?").get(digest(token),at)??db.sql.prepare("SELECT csrf,'guest' role FROM guest_sessions WHERE hash=? AND expires>?").get(digest(token),at)):null;
    if(path==='/api/session'&&req.method==='GET')return json(200,{authenticated:!!session,role:session?.role??null,csrf:session?.csrf??null,guestEnabled:true,configured:!!db.sql.prepare('SELECT id FROM account').get()});
    if(path==='/api/guest/preview'&&req.method==='POST'){
     if(req.headers.origin!==origin)throw new AppError(403,'Для входа нужен запрос с этого сайта.');
-    const key='preview:'+req.socket.remoteAddress,rate=failures.get(key);
-    if(rate&&rate.until>at&&rate.count>=30)throw new AppError(429,'Слишком много попыток. Повторите позже.');
-    failures.set(key,{count:rate?.until>at?rate.count+1:1,until:at+900000});
+    reserve('preview:'+address,30,at,'Слишком много попыток. Повторите позже.');
     const value=secret(),csrf=secret(),ttl=7200;
     db.tx(()=>{if(token){db.sql.prepare('DELETE FROM sessions WHERE hash=?').run(digest(token));db.sql.prepare('DELETE FROM guest_sessions WHERE hash=?').run(digest(token));}db.sql.prepare('INSERT INTO guest_sessions VALUES(?,?,?)').run(digest(value),csrf,at+ttl*1000);});
     res.setHeader('Set-Cookie',`${cookieName}=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${ttl}${secure}`);
@@ -61,10 +73,10 @@ export function createAppServer({db,bot=null,publicOrigin=null}={}){
    if(['/api/login','/api/guest/login'].includes(path)&&req.method==='POST'){
     const role=path==='/api/guest/login'?'guest':'owner';
     if(req.headers.origin!==origin)throw new AppError(403,'Для входа нужен запрос с этого сайта.');
-    const key=role+':'+req.socket.remoteAddress,rate=failures.get(key);
-    if(rate&&rate.until>at&&rate.count>=5)throw new AppError(429,'Слишком много попыток. Повторите через 15 минут.');
+    const key=role+':'+address;
+    reserve(key,5,at,'Слишком много попыток. Повторите через 15 минут.');
     const input=await body(req),account=db.sql.prepare(role==='guest'?'SELECT password FROM guest_access WHERE id=1':'SELECT password FROM account WHERE id=1').get();
-    if(!verifyPassword(input.password,account?.password)){failures.set(key,{count:rate?.until>at?rate.count+1:1,until:rate?.until>at?rate.until:at+900000});throw new AppError(401,'Неверный пароль или вход ещё не настроен.');}
+    if(!verifyPassword(input.password,account?.password))throw new AppError(401,'Неверный пароль или вход ещё не настроен.');
     failures.delete(key);const value=secret(),csrf=secret();
     const ttl=role==='guest'?7200:43200;
     db.tx(()=>{if(token){db.sql.prepare('DELETE FROM sessions WHERE hash=?').run(digest(token));db.sql.prepare('DELETE FROM guest_sessions WHERE hash=?').run(digest(token));}db.sql.prepare(role==='guest'?'INSERT INTO guest_sessions VALUES(?,?,?)':'INSERT INTO sessions VALUES(?,?,?)').run(digest(value),csrf,at+ttl*1000);});
@@ -81,7 +93,7 @@ export function createAppServer({db,bot=null,publicOrigin=null}={}){
    if(path==='/api/guest-access'&&req.method==='DELETE'){db.disableGuests();return json(200,{enabled:false});}
    if(path==='/api/journal'&&req.method==='GET')return json(200,db.read());
    if(path==='/api/journal'&&req.method==='PUT'){
-    const input=await body(req);if(!Number.isSafeInteger(input.revision)||input.revision<0)throw new AppError(400,'Некорректная версия журнала.');
+    const input=await body(req,LIMITS.bytes+4096);if(!Number.isSafeInteger(input.revision)||input.revision<0)throw new AppError(400,'Некорректная версия журнала.');
     return json(200,db.save(input.workspace,input.revision,input.requestId,input.clear??false));
    }
    if(path==='/api/telegram'&&req.method==='GET'){
