@@ -1,0 +1,41 @@
+# Dokploy: Docker Compose (not Stack), Git source; one running replica only.
+services:
+  rhythm:
+    build: .
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "4173"
+      APP_ORIGIN: ${APP_ORIGIN:?Set the HTTPS origin in Dokploy}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      DATA_DIR: /app/data
+      BACKUP_DIR: /app/backups
+    expose:
+      - "4173"
+    volumes:
+      - rhythm-data:/app/data
+      - rhythm-backups:/app/backups
+    networks:
+      - dokploy-network
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 45s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  rhythm-data:
+  rhythm-backups:
+
+networks:
+  dokploy-network:
+    external: true

@@ -1,0 +1,25 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+secrets*.json
+keys/
+
+# Personal journal exports and local data
+ritm-*.json
+ritm-*.csv
+backups/
+data/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+
+# Development output
+node_modules/
+*.log
+.DS_Store
+coverage/

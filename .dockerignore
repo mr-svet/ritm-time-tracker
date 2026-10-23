@@ -1,0 +1,23 @@
+# Allowlist: never send keys, personal SQLite files or .env to Docker builds.
+**
+!Dockerfile
+!package.json
+!index.html
+!app.mjs
+!domain.mjs
+!storage.mjs
+!remote.mjs
+!i18n.mjs
+!styles.css
+!favicon.svg
+!assets/
+!assets/rhythm-forest.png
+!assets/scenes/
+!assets/scenes/*.jpg
+!server/
+!server/*.mjs
+!tools/
+!tools/security.mjs
+!tools/healthcheck.mjs
+!tools/backup.mjs
+!tools/db-entries.mjs
