@@ -22,7 +22,7 @@ async function body(req,maxBytes=4096){
 }
 export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]}={}){
  if(publicOrigin)publicOrigin=validatePublicOrigin(publicOrigin);
- trustedProxies=parseTrustedProxies(trustedProxies.join(','));
+ const proxyAddresses=typeof trustedProxies==='function'?()=>parseTrustedProxies(trustedProxies().join(',')):(()=>{const fixed=parseTrustedProxies(trustedProxies.join(','));return ()=>fixed;})();
  const cookieName=publicOrigin?'__Host-ritm_session':'ritm_session',secure=publicOrigin?'; Secure':'';
  const failures=new Map();let lastCleanup=0;
  const reserve=(key,limit,at,message)=>{
@@ -58,7 +58,7 @@ export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]
    if(!['GET','POST','PUT','DELETE'].includes(req.method))throw new AppError(405,'Метод не поддерживается.');
    if(path==='/api/health'&&req.method==='GET'){db.sql.prepare('SELECT 1').get();return json(200,{ok:true});}
    const at=Date.now();if(at-lastCleanup>60000){db.cleanup(at);for(const [key,rate] of failures)if(rate.until<=at)failures.delete(key);lastCleanup=at;}
-   const address=clientAddress(req,trustedProxies);
+   const address=clientAddress(req,proxyAddresses());
    const token=new RegExp('(?:^|;\\s*)'+cookieName+'=([a-zA-Z0-9_-]{43})(?:;|$)').exec(req.headers.cookie||'')?.[1];
    const session=token?(db.sql.prepare("SELECT csrf,'owner' role FROM sessions WHERE hash=? AND expires>?").get(digest(token),at)??db.sql.prepare("SELECT csrf,'guest' role FROM guest_sessions WHERE hash=? AND expires>?").get(digest(token),at)):null;
    if(path==='/api/session'&&req.method==='GET')return json(200,{authenticated:!!session,role:session?.role??null,csrf:session?.csrf??null,guestEnabled:true,configured:!!db.sql.prepare('SELECT id FROM account').get()});

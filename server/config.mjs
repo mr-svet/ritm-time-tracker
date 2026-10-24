@@ -1,6 +1,7 @@
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseTrustedProxies} from './http-security.mjs';
+import {parseProxyHosts} from './proxy-trust.mjs';
 
 export function databasePath(env=process.env){
  return resolve(env.DATA_DIR||fileURLToPath(new URL('../data/',import.meta.url)),'rhythm.sqlite');
@@ -22,5 +23,8 @@ export function loadConfig(env=process.env){
  if(!production&&env.APP_ORIGIN)throw new Error('APP_ORIGIN используется только с NODE_ENV=production.');
  const trustedProxies=parseTrustedProxies(env.TRUSTED_PROXY_IPS||'');
  if(!production&&trustedProxies.length)throw new Error('TRUSTED_PROXY_IPS используется только в production.');
- return {production,host,port,publicOrigin,trustedProxies,path:databasePath(env)};
+ const trustedProxyHosts=parseProxyHosts(env.TRUSTED_PROXY_HOSTS||'');
+ if(!production&&trustedProxyHosts.length)throw new Error('TRUSTED_PROXY_HOSTS используется только в production.');
+ if(trustedProxyHosts.length&&trustedProxies.length)throw new Error('Выберите TRUSTED_PROXY_HOSTS или TRUSTED_PROXY_IPS.');
+ return {production,host,port,publicOrigin,trustedProxies,trustedProxyHosts,path:databasePath(env)};
 }

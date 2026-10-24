@@ -107,3 +107,38 @@ A verified SQLite backup was created before deployment. Deployment completed suc
 - Keep port 4173 unpublished and the administration panel accessible through the SSH tunnel. Preserve both existing named data/backup volumes during deployment.
 - Deployment and live host verification must be recorded separately after the tunnel is available. A local test run is not evidence of host firewall, SSH configuration or off-server backups.
 
+## Automatic exact proxy trust — 24.10.2026 (prepared, not deployed)
+
+For this Dokploy installation, replace the environment's static `TRUSTED_PROXY_IPS`
+entry with `TRUSTED_PROXY_HOSTS=dokploy-traefik`; remove the old IP entry. The two
+settings are mutually exclusive. The Compose file passes this setting to the app.
+Only use the exact internal name of the proxy controlled by the administrator;
+do not configure public domains or broad network ranges.
+
+The app resolves this name at startup and every 15 seconds through internal
+Docker DNS. Each successful lookup replaces the complete set of exact peer
+addresses. Failed, empty, invalid or timed-out (2 seconds) lookups revoke trust.
+Results also expire after 60 seconds measured with a monotonic clock. During
+an address change, the preceding result can remain trusted until the next
+refresh, at most 60 seconds without a successful refresh. Without a trusted peer,
+forwarded client headers are ignored and rate limits use the socket address;
+several visitors behind the proxy can therefore temporarily share a limit.
+
+The application's network still must be private: port 4173 remains unpublished.
+Do not attach untrusted containers to `dokploy-network`. This change does not
+grant the application access to the Docker socket or require host root access.
+
+Before deploying, create a verified SQLite backup and preserve both named
+volumes. Deploy the security commit through Dokploy; do not use Fresh Volumes.
+Verify the container is healthy, its environment has the hostname and no static
+proxy addresses, Docker DNS resolves the expected Traefik peer, and HTTPS health
+and authentication work. Synthetic tests exercise IP replacement and spoofed
+headers; they do not prove production settings or firewall reachability.
+
+Full disaster recovery remains open: a valid gzip archive, SQLite integrity
+check and completed PostgreSQL dump do not establish a working Dokploy restore.
+Test the saved configuration and databases in a separate isolated Docker host,
+without connecting the restored panel to the production Docker socket, bot or
+deployment targets. Do not enable restored schedules or external integrations
+during this test. A new paid server requires an agreed budget.
+

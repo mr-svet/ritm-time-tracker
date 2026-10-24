@@ -5,6 +5,7 @@ import {JournalDB,passwordHash} from '../server/database.mjs';
 import {createAppServer} from '../server/http.mjs';
 import {clientAddress,parseTrustedProxies} from '../server/http-security.mjs';
 import {loadConfig} from '../server/config.mjs';
+import {createProxyTrust} from '../server/proxy-trust.mjs';
 import {uid} from '../domain.mjs';
 
 const password='synthetic-hardening-owner-password';
@@ -38,6 +39,17 @@ test('a blocked client behind the trusted proxy cannot lock another client out',
  for(let i=0;i<5;i++)assert.equal((await request('/api/login',{value:{password:'wrong'},headers:{'x-forwarded-for':`1.1.1.${i}, 198.51.100.7`}})).status,401);
  assert.equal((await request('/api/login',{value:{password},headers:{'x-forwarded-for':'198.51.100.7'}})).status,429);
  assert.equal((await request('/api/login',{value:{password},headers:{'x-forwarded-for':'203.0.113.9'}})).status,200);
+});
+
+test('login budgets follow the resolved proxy after replacement and reject spoofing by its old peer',async t=>{
+ let ip='172.20.0.2';const trust=createProxyTrust({hosts:['proxy'],lookup:async()=>[{address:ip}]});
+ t.after(()=>trust.close());await trust.refresh();const {request}=fixture(t,trust.addresses);
+ for(let i=0;i<5;i++)assert.equal((await request('/api/login',{value:{password:'wrong'},headers:{'x-forwarded-for':'198.51.100.7'}})).status,401);
+ ip='172.20.0.3';await trust.refresh();
+ assert.equal((await request('/api/login',{peer:ip,value:{password},headers:{'x-forwarded-for':'198.51.100.7'}})).status,429);
+ assert.equal((await request('/api/login',{peer:ip,value:{password},headers:{'x-forwarded-for':'203.0.113.9'}})).status,200);
+ for(let i=0;i<5;i++)assert.equal((await request('/api/login',{value:{password:'wrong'},headers:{'x-forwarded-for':`198.51.100.${i}`}})).status,401);
+ assert.equal((await request('/api/login',{value:{password},headers:{'x-forwarded-for':'203.0.113.8'}})).status,429);
 });
 
 test('untrusted peers cannot rotate their limits through forged forwarded headers',async t=>{
