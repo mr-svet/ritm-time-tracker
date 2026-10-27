@@ -11,7 +11,7 @@ import {securityHeaders,contentPolicy} from '../tools/security.mjs';
 import {validatePublicOrigin} from './config.mjs';
 import {clientAddress,parseTrustedProxies} from './http-security.mjs';
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
-const files=new Set(['index.html','app.mjs','domain.mjs','storage.mjs','remote.mjs','telegram.mjs','form-drafts.mjs','sync-view.mjs','i18n.mjs','styles.css','mobile.css','favicon.svg','assets/github-preview.svg','assets/rhythm-forest.png','assets/scenes/dawn.jpg','assets/scenes/mountains.jpg','assets/scenes/lake.jpg','assets/scenes/meadow.jpg','assets/scenes/coast.jpg']);
+const files=new Set(['index.html','app.mjs','domain.mjs','storage.mjs','remote.mjs','telegram.mjs','form-drafts.mjs','sync-view.mjs','telegram-platform.mjs','i18n.mjs','styles.css','mobile.css','favicon.svg','assets/github-preview.svg','assets/rhythm-forest.png','assets/scenes/dawn.jpg','assets/scenes/mountains.jpg','assets/scenes/lake.jpg','assets/scenes/meadow.jpg','assets/scenes/coast.jpg']);
 for(const scene of ['dawn','mountains','lake','meadow','coast'])files.add('assets/scenes/'+scene+'.svg');
 const landingPages=new Map([['/','landing/en.html'],['/en','landing/en.html'],['/ru','landing/ru.html']]);
 for(const name of ['landing/en.html','landing/ru.html','landing/breathe.css','landing/landing.mjs','landing/breathe-forest.png','landing/breathe-forest-fast.jpg'])files.add(name);

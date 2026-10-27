@@ -1,8 +1,8 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import {inlineScriptHashes,contentPolicy} from './security.mjs';
 const root=new URL('../',import.meta.url);
-const [html,css,domain,storage,remote,formDrafts,syncView,i18n,app,svg]=await Promise.all(['index.html','styles.css','domain.mjs','storage.mjs','remote.mjs','form-drafts.mjs','sync-view.mjs','i18n.mjs','app.mjs','favicon.svg'].map(name=>readFile(new URL(name,root),'utf8')));
-const script=domain.replace(/^export /gm,'').replace('function duration(', 'function domainDuration(').replace('function dateLabel(', 'function domainDateLabel(')+'\n'+storage.replace(/^import .*\n/gm,'').replace(/^export /gm,'')+'\n'+remote.replace(/^export /gm,'')+'\n'+formDrafts.replace(/^export /gm,'')+'\n'+syncView.replace(/^export /gm,'')+'\n'+i18n.replace(/^export /gm,'')+'\nconst duration=formatDuration,dateLabel=formatDate;\n'+app.replace(/^import .*\n/gm,'');
+const [html,css,domain,storage,remote,formDrafts,syncView,telegramPlatform,i18n,app,svg]=await Promise.all(['index.html','styles.css','domain.mjs','storage.mjs','remote.mjs','form-drafts.mjs','sync-view.mjs','telegram-platform.mjs','i18n.mjs','app.mjs','favicon.svg'].map(name=>readFile(new URL(name,root),'utf8')));
+const script=domain.replace(/^export /gm,'').replace('function duration(', 'function domainDuration(').replace('function dateLabel(', 'function domainDateLabel(')+'\n'+storage.replace(/^import .*\n/gm,'').replace(/^export /gm,'')+'\n'+remote.replace(/^export /gm,'')+'\n'+formDrafts.replace(/^export /gm,'')+'\n'+syncView.replace(/^export /gm,'')+'\n'+telegramPlatform.replace(/^export /gm,'')+'\n'+i18n.replace(/^export /gm,'')+'\nconst duration=formatDuration,dateLabel=formatDate;\n'+app.replace(/^import .*\n/gm,'');
 const forest=await readFile(new URL('assets/rhythm-forest.png',root));
 const mobileCss=await readFile(new URL('mobile.css',root),'utf8');
 let bundledCss=(css+'\n'+mobileCss).replaceAll('./assets/rhythm-forest.png','data:image/png;base64,'+forest.toString('base64'));

@@ -27,6 +27,7 @@ test('Real local HTTP transport: Telegram login, shared journal, browser isolati
   });req.on('error',reject);req.end(body?JSON.stringify(body):undefined);
  });
  const shell=await request('/tg');assert.equal(shell.status,200);assert.match(await shell.text(),/telegram-web-app.js/);
+ const platform=await request('/telegram-platform.mjs');assert.equal(platform.status,200);assert.match(platform.headers.get('content-type'),/javascript/);assert.match(await platform.text(),/installTelegramPlatform/);
  assert.equal((await request('/api/journal')).status,401);
  assert.equal((await request('/api/auth/telegram',{method:'POST',body:{initData:signed(222)}})).status,403);
  const login=await request('/api/auth/telegram',{method:'POST',body:{initData:signed()}});assert.equal(login.status,200);

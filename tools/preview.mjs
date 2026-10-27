@@ -7,7 +7,7 @@ import {resolve,sep,extname} from 'node:path';
 import {inlineScriptHashes,contentPolicy,securityHeaders} from './security.mjs';
 const defaultRoot=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg'};
-const allowed=new Set(['index.html','styles.css','mobile.css','app.mjs','domain.mjs','storage.mjs','remote.mjs','form-drafts.mjs','sync-view.mjs','i18n.mjs','favicon.svg','ritm-preview.html','assets/github-preview.svg','assets/rhythm-forest.png','assets/scenes/dawn.jpg','assets/scenes/mountains.jpg','assets/scenes/lake.jpg','assets/scenes/meadow.jpg','assets/scenes/coast.jpg']);
+const allowed=new Set(['index.html','styles.css','mobile.css','app.mjs','domain.mjs','storage.mjs','remote.mjs','form-drafts.mjs','sync-view.mjs','telegram-platform.mjs','i18n.mjs','favicon.svg','ritm-preview.html','assets/github-preview.svg','assets/rhythm-forest.png','assets/scenes/dawn.jpg','assets/scenes/mountains.jpg','assets/scenes/lake.jpg','assets/scenes/meadow.jpg','assets/scenes/coast.jpg']);
 for(const scene of ['dawn','mountains','lake','meadow','coast'])allowed.add('assets/scenes/'+scene+'.svg');
 const pages=new Set(['/','/today','/journal','/stats','/trends','/settings']);
 const privateIPv4=address=>/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address);

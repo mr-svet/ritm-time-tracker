@@ -531,10 +531,18 @@ html[data-miniapp] .sync-conflict summary{cursor:pointer;min-height:44px;padding
 html[data-miniapp] .sync-conflict ol{padding-left:20px;max-height:340px;overflow:auto}
 html[data-miniapp] .sync-conflict li{padding-block:8px;border-bottom:1px solid var(--line)}
 html[data-miniapp] .sync-conflict li p{margin:4px 0}
+/* Device and Telegram overlays occupy the same edges; reserve the larger inset. */
+html[data-miniapp]{--ritm-safe-top:max(env(safe-area-inset-top,0px),var(--tg-safe-top,0px));--ritm-safe-bottom:max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px));--ritm-safe-left:max(env(safe-area-inset-left,0px),var(--tg-safe-left,0px));--ritm-safe-right:max(env(safe-area-inset-right,0px),var(--tg-safe-right,0px))}
+html[data-miniapp] body{padding:var(--ritm-safe-top) var(--ritm-safe-right) 0 var(--ritm-safe-left)}
+html[data-miniapp] .site-header{top:var(--ritm-safe-top)}
+html[data-miniapp] .modal{max-height:calc(var(--ritm-visible-height,100dvh) - var(--ritm-safe-top) - var(--ritm-safe-bottom) - 24px);scroll-padding-block:16px}
+html[data-miniapp][data-keyboard="true"] .modal{margin-block:0;top:calc(var(--ritm-safe-top) + 12px)}
 @media(max-width:900px){
- html[data-miniapp] .mobile-nav{bottom:var(--tg-safe-bottom,0px)}
- html[data-miniapp] .main{padding-bottom:calc(110px + var(--tg-safe-bottom,0px))}
- html[data-miniapp] .modal-footer{flex-wrap:wrap;gap:10px;padding-bottom:calc(12px + var(--tg-safe-bottom,0px))}
+ html[data-miniapp] .mobile-nav{bottom:0;left:var(--ritm-safe-left);right:var(--ritm-safe-right);width:auto;padding-bottom:calc(6px + var(--ritm-safe-bottom))}
+ html[data-miniapp] .main{padding-bottom:calc(110px + var(--ritm-safe-bottom))}
+ html[data-miniapp] .modal-footer{flex-wrap:wrap;gap:10px;padding-bottom:12px}
  html[data-miniapp] .modal-footer>.btn{flex:1 1 140px}
  html[data-miniapp] .form-row{min-width:0}
+ html[data-miniapp][data-keyboard="true"] .mobile-nav{display:none}
+ html[data-miniapp][data-keyboard="true"] #toast{bottom:16px}
 }

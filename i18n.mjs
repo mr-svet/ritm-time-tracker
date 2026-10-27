@@ -1,6 +1,12 @@
 // Translation is applied only to authored strings and template fragments.
 // Interpolated journal data is never scanned, translated or used as markup.
 export const translations = {
+ "Подключаем ваш журнал…":"Connecting your journal…",
+ "Приложение доступно Telegram-аккаунту, привязанному в настройках сайта.":"The app is available to the Telegram account linked in the website settings.",
+ "Вернуться в чат бота":"Return to bot chat",
+ "Сначала сохраните заполненные формы и дождитесь синхронизации, затем вернитесь в чат.":"Save your filled forms and wait for synchronization before returning to the chat.",
+ "Ответы боту сохраняются в этот журнал. Сайт проверяет обновления каждые 10 секунд, когда вы не редактируете форму.":"Bot replies are saved to this journal. Updates are checked every 10 seconds while you are not editing a form.",
+ "Импорт, экспорт и управление доступом доступны в настройках на сайте.":"Import, export and access management are available in the website settings.",
  // Telegram Mini App editing and recovery.
  "Журнал изменён одновременно":"The journal changed in another interface",
  "Ваш вариант остался в памяти. Свежая версия сервера пока недоступна. Повтор устаревшего сохранения заблокирован.":"Your version is still in this tab. The latest server version is unavailable. Resending the outdated version is blocked.",
