@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Ritm interface preview</title>
+  <desc id="desc">Illustration of the time journal with a check-in, day scene, timeline, and overview navigation.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#081e1d"/><stop offset="1" stop-color="#103b30"/></linearGradient>
+    <linearGradient id="forest" x2="1" y2="1"><stop stop-color="#1b5b4a"/><stop offset=".5" stop-color="#0d3a35"/><stop offset="1" stop-color="#072521"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#79c3ad" stop-opacity=".38"/><stop offset="1" stop-color="#79c3ad" stop-opacity="0"/></radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".28"/></filter>
+  </defs>
+  <rect width="1200" height="675" fill="#09211e"/>
+  <circle cx="905" cy="195" r="350" fill="url(#glow)"/>
+  <g filter="url(#shadow)">
+    <rect x="34" y="31" width="1132" height="610" rx="24" fill="url(#bg)" stroke="#628f7c" stroke-opacity=".35"/>
+    <path d="M34 112H1166M34 151H1166M248 151V641" stroke="#6f9b83" stroke-opacity=".22"/>
+    <rect x="55" y="53" width="39" height="39" rx="12" fill="#c5de9b"/>
+    <path d="M67 80V66h13m-12 6h12" fill="none" stroke="#194a38" stroke-width="3" stroke-linecap="round"/>
+    <text x="108" y="70" fill="#edf5df" font-size="22" font-weight="700" font-family="Arial,sans-serif">Ritm</text>
+    <text x="108" y="87" fill="#9db7a7" font-size="11" font-family="Arial,sans-serif">TIME JOURNAL</text>
+    <text x="902" y="77" fill="#c2d3c2" font-size="13" font-family="Arial,sans-serif">Wednesday, 21 October</text>
+    <rect x="1090" y="51" width="50" height="38" rx="13" fill="#264d3d" stroke="#6f9b83" stroke-opacity=".45"/>
+    <text x="1102" y="75" fill="#e4ebd3" font-size="13" font-family="Arial,sans-serif">EN</text>
+    <text x="69" y="137" fill="#a6d5bb" font-size="12" font-family="Arial,sans-serif">RIGHT NOW   10:30–11:00</text>
+    <text x="346" y="137" fill="#e2c793" font-size="12" font-family="Arial,sans-serif">LOGGED TODAY   4 hr 30 min</text>
+    <text x="660" y="137" fill="#9ed2d5" font-size="12" font-family="Arial,sans-serif">JOURNAL COVERAGE   68%</text>
+    <text x="973" y="137" fill="#f0bc74" font-size="12" font-family="Arial,sans-serif">30 MIN STEP</text>
+    <rect x="53" y="175" width="174" height="37" rx="10" fill="#bcd89b"/>
+    <text x="70" y="199" fill="#15352c" font-size="14" font-weight="700" font-family="Arial,sans-serif">Today</text>
+    <text x="70" y="251" fill="#b3c8b7" font-size="14" font-family="Arial,sans-serif">Overview</text>
+    <text x="70" y="297" fill="#b3c8b7" font-size="14" font-family="Arial,sans-serif">Journal</text>
+    <text x="70" y="343" fill="#b3c8b7" font-size="14" font-family="Arial,sans-serif">Insights</text>
+    <text x="70" y="389" fill="#b3c8b7" font-size="14" font-family="Arial,sans-serif">Settings</text>
+    <path d="M60 460C170 485 102 542 214 563" fill="none" stroke="#70aa87" stroke-opacity=".46" stroke-width="2"/>
+    <circle cx="123" cy="499" r="4" fill="#efcf88"/>
+    <text x="66" y="594" fill="#d6e7cf" font-size="14" font-family="Arial,sans-serif">Notice your day</text>
+    <text x="275" y="195" fill="#d4e3cb" font-size="13" font-family="Arial,sans-serif">YOUR OWN PACE</text>
+    <text x="275" y="235" fill="#f1f4df" font-size="31" font-family="Georgia,serif">What makes up your day</text>
+    <rect x="275" y="264" width="429" height="237" rx="19" fill="#174035" stroke="#79a687" stroke-opacity=".42"/>
+    <text x="301" y="299" fill="#e6cc91" font-size="11" letter-spacing="2" font-family="Arial,sans-serif">QUICK CHECK-IN</text>
+    <text x="301" y="336" fill="#edf2dc" font-size="24" font-family="Georgia,serif">What were you doing?</text>
+    <rect x="301" y="356" width="377" height="69" rx="12" fill="#092b27" stroke="#6a9b81" stroke-opacity=".44"/>
+    <text x="318" y="383" fill="#b6c5b5" font-size="14" font-family="Arial,sans-serif">Working on the website design</text>
+    <rect x="301" y="448" width="164" height="36" rx="10" fill="#bfdc9d"/>
+    <text x="321" y="471" fill="#18392e" font-size="13" font-weight="700" font-family="Arial,sans-serif">Save entry</text>
+    <rect x="725" y="264" width="415" height="237" rx="19" fill="url(#forest)" stroke="#79a687" stroke-opacity=".42"/>
+    <path d="M726 437L772 371 810 412 858 319 919 407 971 339 1024 412 1083 350 1140 426V501H726Z" fill="#174d42" opacity=".78"/>
+    <path d="M726 459L768 414 816 468 875 389 948 465 1016 402 1082 457 1140 421V501H726Z" fill="#0b2d2c" opacity=".76"/>
+    <text x="752" y="299" fill="#e0c995" font-size="11" letter-spacing="2" font-family="Arial,sans-serif">DAY AT A GLANCE</text>
+    <text x="752" y="334" fill="#f3f4df" font-size="25" font-family="Georgia,serif">A picture of your day</text>
+    <circle cx="933" cy="406" r="57" fill="#0a2a28" fill-opacity=".72" stroke="#9bc4a3" stroke-opacity=".25" stroke-width="12"/>
+    <path d="M933 349A57 57 0 1 1 877 396" fill="none" stroke="#dfc185" stroke-width="12" stroke-linecap="round"/>
+    <text x="905" y="414" fill="#f4e4b7" font-size="22" font-weight="700" font-family="Arial,sans-serif">68%</text>
+    <rect x="275" y="524" width="865" height="91" rx="18" fill="#14382f" stroke="#79a687" stroke-opacity=".35"/>
+    <text x="301" y="556" fill="#ecf1df" font-size="20" font-family="Georgia,serif">Your timeline</text>
+    <text x="301" y="585" fill="#9fc7ab" font-size="13" font-family="Arial,sans-serif">09:00–09:30  ·  Work</text>
+    <text x="579" y="585" fill="#debe84" font-size="13" font-family="Arial,sans-serif">09:30–10:00  ·  Learning</text>
+    <text x="911" y="585" fill="#a8bcb1" font-size="13" font-family="Arial,sans-serif">10:00–10:30  ·  Break</text>
+  </g>
+</svg>

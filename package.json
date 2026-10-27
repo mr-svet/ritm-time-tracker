@@ -1,0 +1,28 @@
+{
+  "name": "rhythm",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Дневник времени: сайт, SQLite и Telegram-бот. Подготовка к Dokploy.",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/preview.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node tools/check.mjs",
+    "build": "node tools/build-preview.mjs",
+    "setup": "node server/setup.mjs",
+    "start": "node --env-file-if-exists=.env server/start.mjs",
+    "reset-password": "node server/setup.mjs --reset-password",
+    "db:entries": "node tools/db-entries.mjs",
+    "db:backup": "node --env-file-if-exists=.env tools/backup.mjs",
+    "build:agentation": "node tools/build-agentation.mjs"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "devDependencies": {
+    "agentation": "3.1.2",
+    "esbuild": "0.28.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}
