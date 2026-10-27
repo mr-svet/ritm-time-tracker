@@ -27,6 +27,7 @@ export class JournalDB {
    CREATE TABLE IF NOT EXISTS day_events(date TEXT NOT NULL,type TEXT NOT NULL CHECK(type IN ('wake','sleep')),at TEXT NOT NULL,timezone TEXT NOT NULL,PRIMARY KEY(date,type));
    CREATE TABLE IF NOT EXISTS wake_prompts(date TEXT PRIMARY KEY,timezone TEXT NOT NULL,status TEXT NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,message_id INTEGER,retry_at INTEGER NOT NULL DEFAULT 0);
    CREATE INDEX IF NOT EXISTS entries_date ON entries(date,start);
+   CREATE TABLE IF NOT EXISTS miniapp_sessions(hash TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL,user_id TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);
    CREATE TABLE IF NOT EXISTS guest_access(id INTEGER PRIMARY KEY CHECK(id=1),password TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS guest_sessions(hash TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);
@@ -86,9 +87,9 @@ export class JournalDB {
    this.sql.prepare('INSERT INTO telegram VALUES(1,?,?)').run(String(user),String(chat));this.sql.exec('DELETE FROM links');this.sql.exec('UPDATE journal SET revision=revision+1 WHERE id=1');
   });
  }
- unlink(){this.tx(()=>{this.sql.exec('DELETE FROM telegram; DELETE FROM links; DELETE FROM prompts; DELETE FROM wake_prompts; DELETE FROM category_choices; DELETE FROM pending; UPDATE journal SET revision=revision+1 WHERE id=1');});}
+ unlink(){this.tx(()=>{this.sql.exec('DELETE FROM miniapp_sessions; DELETE FROM telegram; DELETE FROM links; DELETE FROM prompts; DELETE FROM wake_prompts; DELETE FROM category_choices; DELETE FROM pending; UPDATE journal SET revision=revision+1 WHERE id=1');});}
  cleanup(at=Date.now()){
-  for(const table of ['sessions','guest_sessions','links','pending','category_choices'])this.sql.prepare(`DELETE FROM ${table} WHERE expires<?`).run(at);
+  for(const table of ['sessions','guest_sessions','miniapp_sessions','links','pending','category_choices'])this.sql.prepare(`DELETE FROM ${table} WHERE expires<?`).run(at);
   this.sql.prepare('DELETE FROM requests WHERE created<?').run(at-7*86400000);
   this.sql.prepare('DELETE FROM updates WHERE created<?').run(at-7*86400000);
  }

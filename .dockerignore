@@ -35,3 +35,8 @@
 !package-lock.json
 !tools/agentation-ui.mjs
 !tools/build-agentation.mjs
+
+!telegram.mjs
+
+!form-drafts.mjs
+!sync-view.mjs

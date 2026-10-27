@@ -15,6 +15,10 @@ export function validatePublicOrigin(value){
 }
 
 export function loadConfig(env=process.env){
+ const basePath=env.APP_PATH_PREFIX||'';
+ if(basePath&&!/^\/[a-z0-9-]{1,60}$/.test(basePath))throw new Error('APP_PATH_PREFIX должен быть одним сегментом пути без завершающего слеша.');
+ if(env.TELEGRAM_POLLING_ENABLED!==undefined&&!['0','1'].includes(env.TELEGRAM_POLLING_ENABLED))throw new Error('TELEGRAM_POLLING_ENABLED должен быть 0 или 1.');
+ const botPollingEnabled=env.TELEGRAM_POLLING_ENABLED!=='0';
  const production=env.NODE_ENV==='production',port=Number(env.PORT||4173);
  if(!Number.isInteger(port)||port<1||port>65535)throw new Error('Некорректный PORT.');
  const host=env.HOST||(production?'0.0.0.0':'127.0.0.1');
@@ -26,5 +30,5 @@ export function loadConfig(env=process.env){
  const trustedProxyHosts=parseProxyHosts(env.TRUSTED_PROXY_HOSTS||'');
  if(!production&&trustedProxyHosts.length)throw new Error('TRUSTED_PROXY_HOSTS используется только в production.');
  if(trustedProxyHosts.length&&trustedProxies.length)throw new Error('Выберите TRUSTED_PROXY_HOSTS или TRUSTED_PROXY_IPS.');
- return {production,host,port,publicOrigin,trustedProxies,trustedProxyHosts,path:databasePath(env)};
+ return {production,host,port,publicOrigin,trustedProxies,trustedProxyHosts,basePath,botPollingEnabled,path:databasePath(env)};
 }

@@ -219,16 +219,31 @@ export function processUpdate(db,update,at=Date.now(),siteURL='http://127.0.0.1:
  });
 }
 export class TelegramBot {
- constructor(db,token,{fetchImpl=fetch,siteURL='http://127.0.0.1:4173'}={}){this.db=db;this.token=token;this.fetch=fetchImpl;this.siteURL=siteURL;this.ready=false;this.username=null;this.statusError='';this.stopped=false;this.busy=false;this.controllers=new Set();}
+ constructor(db,token,{fetchImpl=fetch,siteURL='http://127.0.0.1:4173',miniAppURL=null}={}){this.db=db;this.token=token;this.fetch=fetchImpl;this.siteURL=siteURL;this.miniAppURL=miniAppURL;this.miniAppError='';this.miniAppMenuKey=null;this.miniAppMenuRetryAt=0;this.ready=false;this.username=null;this.statusError='';this.stopped=false;this.busy=false;this.controllers=new Set();}
  async call(method,body={}){
   const controller=new AbortController();this.controllers.add(controller);const timer=setTimeout(()=>controller.abort(),40000);
   try{const response=await this.fetch(`https://api.telegram.org/bot${this.token}/${method}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});const result=await response.json();if(!result.ok){const error=new Error('Telegram отклонил запрос ('+(result.error_code??response.status)+').');error.code=result.error_code;error.retryAfter=result.parameters?.retry_after;throw error;}return result.result;}finally{clearTimeout(timer);this.controllers.delete(controller);}
+ }
+ async configureMiniAppMenu(){
+  const link=this.db.link();if(!this.miniAppURL||!link)return;
+  const url=new URL(this.miniAppURL);if(url.protocol!=='https:')throw new Error('Mini App требует HTTPS.');
+  await this.call('setChatMenuButton',{chat_id:link.chat_id,menu_button:{type:'web_app',text:'Открыть Ritm',web_app:{url:url.href}}});
+ }
+ async syncMiniAppMenu(at=Date.now()){
+  const link=this.db.link();
+  if(!this.miniAppURL||!link){this.miniAppMenuKey=null;this.miniAppMenuRetryAt=0;this.miniAppError='';return;}
+  const key=JSON.stringify([link.user_id,link.chat_id]);
+  if(this.miniAppMenuKey===key||at<this.miniAppMenuRetryAt)return;
+  try{await this.configureMiniAppMenu();this.miniAppMenuKey=key;this.miniAppMenuRetryAt=0;this.miniAppError='';}
+  catch{this.miniAppMenuRetryAt=at+60000;this.miniAppError='Не удалось настроить кнопку Mini App. Повторим автоматически.';}
  }
  async initialize(){
   const me=await this.call('getMe');if(typeof me.username!=='string'||!/^\w+$/.test(me.username))throw new Error('Telegram не вернул имя бота.');
   const hook=await this.call('getWebhookInfo');if(hook.url)throw new Error('У бота уже настроен webhook. Для локальной версии нужен отдельный бот без webhook.');
   await this.call('setMyCommands',{commands:[{command:'wake',description:'Wake-up / Подъём'},{command:'dayoff',description:'Day off / Выходной'},{command:'sleep',description:'Bedtime / Отбой'},{command:'settings',description:'Settings / Настройки'},{command:'resume',description:'Resume / Возобновить'},{command:'help',description:'Help / Справка'},{command:'site',description:'Website / Сайт'}]});
   this.username=me.username;this.ready=true;this.statusError='';
+  // A failed menu update must never disable the existing reminder scheduler.
+  await this.syncMiniAppMenu();
   this.db.sql.exec("UPDATE prompts SET status='uncertain',error='Сервер остановился во время отправки; автоматический повтор отключён.' WHERE status='sending'");
   this.db.sql.exec("UPDATE wake_prompts SET status='uncertain' WHERE status='sending'");
  }
@@ -276,6 +291,7 @@ export class TelegramBot {
   let initialized=false;
   while(!this.stopped){try{
    if(!initialized){await this.initialize();initialized=true;this.timer=setInterval(()=>this.tick().catch(()=>{this.statusError='Ошибка планировщика.';}),15000);await this.tick();}
+   await this.syncMiniAppMenu();
    const offset=Number(this.db.sql.prepare("SELECT value FROM meta WHERE key='offset'").get()?.value??0);
    const updates=await this.call('getUpdates',{offset,timeout:25,allowed_updates:['message','callback_query']});
    for(const update of updates){if(this.stopped)break;let effects;try{effects=processUpdate(this.db,update,Date.now(),this.siteURL);}catch{
@@ -286,6 +302,7 @@ export class TelegramBot {
      if(link&&String(from?.id)===link.user_id&&String(message?.chat?.id)===link.chat_id)try{await this.call('sendMessage',{chat_id:link.chat_id,text:'Не удалось сохранить ответ. Проверьте журнал на сайте и повторите запись. Предыдущие данные сохранены.'});}catch{}
      continue;
     }
+    await this.syncMiniAppMenu();
     for(const effect of effects){if(this.stopped)break;try{const sent=await this.call(effect.method,effect.body);if(effect.splitDraft)rememberSplitMessage(this.db,effect,sent);if(effect.choicePrompt&&Number.isSafeInteger(sent?.message_id))this.db.sql.prepare('UPDATE category_choices SET message_id=? WHERE prompt_id=? AND selected_at=?').run(sent.message_id,effect.choicePrompt,effect.choiceSelectedAt);}catch{this.statusError='Ответ обработан, но подтверждение Telegram не доставлено. Проверьте журнал на сайте.';}}
    }
   }catch(error){if(this.stopped)break;this.ready=initialized;this.statusError=initialized?'Telegram временно недоступен. Подключение будет повторено.':error.message.startsWith('У бота')?error.message:'Не удалось подключить Telegram. Проверьте токен и сеть.';await new Promise(resolve=>{this.wake=resolve;this.waitTimer=setTimeout(resolve,5000);});}}

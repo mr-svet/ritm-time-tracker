@@ -8,7 +8,7 @@ RUN npm run build:agentation
 FROM node:24.22.1-bookworm-slim
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=4173 DATA_DIR=/app/data
 WORKDIR /app
-COPY package.json index.html app.mjs domain.mjs storage.mjs remote.mjs i18n.mjs styles.css mobile.css favicon.svg ./
+COPY package.json index.html app.mjs domain.mjs storage.mjs remote.mjs telegram.mjs form-drafts.mjs sync-view.mjs i18n.mjs styles.css mobile.css favicon.svg ./
 COPY assets/rhythm-forest.png ./assets/rhythm-forest.png
 COPY assets/scenes/ ./assets/scenes/
 COPY landing/ ./landing/

@@ -11,6 +11,7 @@ services:
       TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-}
       TRUSTED_PROXY_HOSTS: ${TRUSTED_PROXY_HOSTS:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      MINI_APP_ENABLED: ${MINI_APP_ENABLED:-0}
       DATA_DIR: /app/data
       BACKUP_DIR: /app/backups
     expose:

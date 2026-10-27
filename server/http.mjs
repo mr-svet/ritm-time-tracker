@@ -5,12 +5,13 @@ import {readFile,realpath} from 'node:fs/promises';
 import {resolve,sep,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {JournalDB,AppError,digest,secret,verifyPassword} from './database.mjs';
+import {validateTelegramInitData} from './telegram-auth.mjs';
 import {LIMITS} from '../domain.mjs';
 import {securityHeaders,contentPolicy} from '../tools/security.mjs';
 import {validatePublicOrigin} from './config.mjs';
 import {clientAddress,parseTrustedProxies} from './http-security.mjs';
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
-const files=new Set(['index.html','app.mjs','domain.mjs','storage.mjs','remote.mjs','i18n.mjs','styles.css','mobile.css','favicon.svg','assets/github-preview.svg','assets/rhythm-forest.png','assets/scenes/dawn.jpg','assets/scenes/mountains.jpg','assets/scenes/lake.jpg','assets/scenes/meadow.jpg','assets/scenes/coast.jpg']);
+const files=new Set(['index.html','app.mjs','domain.mjs','storage.mjs','remote.mjs','telegram.mjs','form-drafts.mjs','sync-view.mjs','i18n.mjs','styles.css','mobile.css','favicon.svg','assets/github-preview.svg','assets/rhythm-forest.png','assets/scenes/dawn.jpg','assets/scenes/mountains.jpg','assets/scenes/lake.jpg','assets/scenes/meadow.jpg','assets/scenes/coast.jpg']);
 for(const scene of ['dawn','mountains','lake','meadow','coast'])files.add('assets/scenes/'+scene+'.svg');
 const landingPages=new Map([['/','landing/en.html'],['/en','landing/en.html'],['/ru','landing/ru.html']]);
 for(const name of ['landing/en.html','landing/ru.html','landing/breathe.css','landing/landing.mjs','landing/breathe-forest.png','landing/breathe-forest-fast.jpg'])files.add(name);
@@ -26,7 +27,8 @@ async function body(req,maxBytes=4096){
  if(input===null||typeof input!=='object'||Array.isArray(input))throw new AppError(400,'Ожидается объект JSON.');
  return input;
 }
-export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]}={}){
+export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[],telegramToken=null,basePath=''}={}){
+ if(basePath&&!/^\/[a-z0-9-]{1,60}$/.test(basePath))throw new Error('Некорректный базовый путь.');
  if(publicOrigin)publicOrigin=validatePublicOrigin(publicOrigin);
  const proxyAddresses=typeof trustedProxies==='function'?()=>parseTrustedProxies(trustedProxies().join(',')):(()=>{const fixed=parseTrustedProxies(trustedProxies.join(','));return ()=>fixed;})();
  const cookieName=publicOrigin?'__Host-ritm_session':'ritm_session',secure=publicOrigin?'; Secure':'';
@@ -46,17 +48,27 @@ export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]
    const host=req.headers.host,port=server.address()?.port;
    if(!(publicOrigin?[new URL(publicOrigin).host]:['127.0.0.1:'+port,'localhost:'+port]).includes(host))throw new AppError(403,'Недопустимый Host.');
    const origin=publicOrigin||'http://'+host;
-   const path=new URL(req.url,origin).pathname;
+   const requestPath=new URL(req.url,origin).pathname;
+   if(basePath&&requestPath!==basePath&&!requestPath.startsWith(basePath+'/'))throw new AppError(404,'Не найдено.');
+   const path=basePath?(requestPath.slice(basePath.length)||'/'):requestPath;
+   const miniapp=req.headers['x-ritm-client']==='miniapp';
+   const activeCookie=miniapp?(publicOrigin?'__Host-ritm_miniapp':'ritm_miniapp'):cookieName;
+   const sameSite=miniapp&&publicOrigin?'None':'Strict';
+   if(path==='/tg'){
+    res.setHeader('Content-Security-Policy',contentPolicy().replace("connect-src 'none'","connect-src 'self'").replace("script-src 'self'","script-src 'self' https://telegram.org").replace("frame-ancestors 'none'","frame-ancestors https://web.telegram.org https://webk.telegram.org https://webz.telegram.org"));
+    res.removeHeader('X-Frame-Options');
+   }
    // External links may load the public document shell. Its static allowlist
    // contains no user data; API authorization and CSRF checks still apply.
-   const publicNavigation=!path.startsWith('/api/')&&['GET','HEAD'].includes(req.method)&&req.headers['sec-fetch-mode']==='navigate'&&req.headers['sec-fetch-dest']==='document';
+   const miniappFrame=path==='/tg'&&['GET','HEAD'].includes(req.method)&&req.headers['sec-fetch-mode']==='navigate'&&req.headers['sec-fetch-dest']==='iframe';
+   const publicNavigation=miniappFrame||!path.startsWith('/api/')&&['GET','HEAD'].includes(req.method)&&req.headers['sec-fetch-mode']==='navigate'&&req.headers['sec-fetch-dest']==='document';
    if(!publicNavigation){
     if(req.headers.origin&&req.headers.origin!==origin)throw new AppError(403,'Запрос с другого сайта запрещён.');
     if(req.headers['sec-fetch-site']==='cross-site')throw new AppError(403,'Запрос с другого сайта запрещён.');
    }
    if(!path.startsWith('/api/')){
     if(!['GET','HEAD'].includes(req.method))throw new AppError(405,'Метод не поддерживается.');
-    const name=landingPages.get(path)??(pages.has(path)?'index.html':decodeURIComponent(path).slice(1));if(!files.has(name))throw new AppError(404,'Не найдено.');
+    const name=landingPages.get(path)??((pages.has(path)||path==='/tg')?'index.html':decodeURIComponent(path).slice(1));if(!files.has(name))throw new AppError(404,'Не найдено.');
     let feedbackOwner=false;
     if(name.endsWith('.html')||name==='agentation/panel.mjs'){
      const ownerToken=new RegExp('(?:^|;\\s*)'+cookieName+'=([a-zA-Z0-9_-]{43})(?:;|$)').exec(req.headers.cookie||'')?.[1];
@@ -65,21 +77,35 @@ export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]
     }
     const file=await realpath(resolve(root,name));if(!file.startsWith(root+sep))throw new AppError(404,'Не найдено.');
     let data=await readFile(file);if(name==='index.html')data=Buffer.from(data.toString().replace('<html ', '<html data-api="true" '));
+    if(path==='/tg')data=Buffer.from(data.toString().replace('<html ','<html data-miniapp="true" ').replace('<script type="module" src="/app.mjs"></script>','<script src="https://telegram.org/js/telegram-web-app.js"></script><script type="module" src="/telegram.mjs"></script>'));
     if(['landing/en.html','landing/ru.html'].includes(name))res.setHeader('Content-Security-Policy',contentPolicy().replace("font-src 'none'","font-src data:"));
-    if(name.endsWith('.html')){
+    if(name.endsWith('.html')&&path!=='/tg'){
      const feedback=feedbackPage({html:data.toString(),policy:String(res.getHeader('Content-Security-Policy')),url:new URL(req.url,origin),cookie:req.headers.cookie,secure:!!publicOrigin,owner:feedbackOwner});
      data=Buffer.from(feedback.html);res.setHeader('Content-Security-Policy',feedback.policy);
      if(feedback.setCookie)res.setHeader('Set-Cookie',feedback.setCookie);
     }
+    if(name==='index.html'&&basePath)data=Buffer.from(data.toString().replace('<html ',`<html data-base-path="${basePath}" `).replaceAll('href="/','href="'+basePath+'/').replaceAll('src="/','src="'+basePath+'/'));
     res.writeHead(200,{'Content-Type':types[extname(file)],'Content-Length':data.length});res.end(req.method==='HEAD'?undefined:data);return;
    }
    if(!['GET','POST','PUT','DELETE'].includes(req.method))throw new AppError(405,'Метод не поддерживается.');
    if(path==='/api/health'&&req.method==='GET'){db.sql.prepare('SELECT 1').get();return json(200,{ok:true});}
    const at=Date.now();if(at-lastCleanup>60000){db.cleanup(at);for(const [key,rate] of failures)if(rate.until<=at)failures.delete(key);lastCleanup=at;}
    const address=clientAddress(req,proxyAddresses());
-   const token=new RegExp('(?:^|;\\s*)'+cookieName+'=([a-zA-Z0-9_-]{43})(?:;|$)').exec(req.headers.cookie||'')?.[1];
-   const session=token?(db.sql.prepare("SELECT csrf,'owner' role FROM sessions WHERE hash=? AND expires>?").get(digest(token),at)??db.sql.prepare("SELECT csrf,'guest' role FROM guest_sessions WHERE hash=? AND expires>?").get(digest(token),at)):null;
+   const token=new RegExp('(?:^|;\\s*)'+activeCookie+'=([a-zA-Z0-9_-]{43})(?:;|$)').exec(req.headers.cookie||'')?.[1];
+   const session=miniapp?(telegramToken&&token?db.sql.prepare("SELECT csrf,'owner' role FROM miniapp_sessions WHERE hash=? AND expires>? AND user_id=(SELECT user_id FROM telegram WHERE id=1)").get(digest(token),at):null):token?(db.sql.prepare("SELECT csrf,'owner' role FROM sessions WHERE hash=? AND expires>?").get(digest(token),at)??db.sql.prepare("SELECT csrf,'guest' role FROM guest_sessions WHERE hash=? AND expires>?").get(digest(token),at)):null;
+   if(path==='/api/auth/telegram'&&req.method==='POST'){
+    if(!miniapp||req.headers.origin!==origin)throw new AppError(403,'Недопустимый источник входа.');
+    if(!telegramToken)throw new AppError(503,'Вход Telegram пока не настроен.');
+    reserve('miniapp:'+address,30,at,'Слишком много попыток входа. Повторите позже.');
+    const input=await body(req,20000),{userId}=validateTelegramInitData(input.initData,telegramToken,at);
+    if(db.link()?.user_id!==userId)throw new AppError(403,'Этот Telegram не привязан к журналу. Подключите его в настройках сайта.');
+    const value=secret(),csrf=secret(),ttl=43200;
+    db.tx(()=>{if(token)db.sql.prepare('DELETE FROM miniapp_sessions WHERE hash=?').run(digest(token));db.sql.prepare('INSERT INTO miniapp_sessions VALUES(?,?,?,?)').run(digest(value),csrf,at+ttl*1000,userId);});
+    res.setHeader('Set-Cookie',`${activeCookie}=${value}; HttpOnly; SameSite=${sameSite}; Path=/; Max-Age=${ttl}${secure}`);
+    return json(200,{authenticated:true,role:'owner',csrf});
+   }
    if(path==='/api/session'&&req.method==='GET')return json(200,{authenticated:!!session,role:session?.role??null,csrf:session?.csrf??null,guestEnabled:true,configured:!!db.sql.prepare('SELECT id FROM account').get()});
+   if(miniapp&&['/api/login','/api/guest/login','/api/guest/preview','/api/guest-access','/api/telegram/link'].includes(path))throw new AppError(403,'Это действие доступно на сайте владельца.');
    if(path==='/api/guest/preview'&&req.method==='POST'){
     if(req.headers.origin!==origin)throw new AppError(403,'Для входа нужен запрос с этого сайта.');
     reserve('preview:'+address,30,at,'Слишком много попыток. Повторите позже.');
@@ -103,7 +129,7 @@ export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]
    }
    if(!session)throw new AppError(401,'Войдите в свой журнал.');
    if(req.method!=='GET'&&(req.headers.origin!==origin||req.headers['x-csrf-token']!==session.csrf))throw new AppError(403,'Проверка безопасности запроса не пройдена. Перезагрузите страницу.');
-   if(path==='/api/logout'&&req.method==='POST'){db.sql.prepare(session.role==='guest'?'DELETE FROM guest_sessions WHERE hash=?':'DELETE FROM sessions WHERE hash=?').run(digest(token));res.setHeader('Set-Cookie',`${cookieName}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${secure}`);return json(200,{ok:true});}
+   if(path==='/api/logout'&&req.method==='POST'){db.sql.prepare(miniapp?'DELETE FROM miniapp_sessions WHERE hash=?':session.role==='guest'?'DELETE FROM guest_sessions WHERE hash=?':'DELETE FROM sessions WHERE hash=?').run(digest(token));res.setHeader('Set-Cookie',`${activeCookie}=; HttpOnly; SameSite=${sameSite}; Path=/; Max-Age=0${secure}`);return json(200,{ok:true});}
    // A forecast is public city data and is shared by owner and visitor sessions.
    if(path==='/api/weather'&&req.method==='GET'){
     reserve('weather:'+address,120,at,'Слишком много запросов погоды. Повторите позже.');
@@ -124,7 +150,7 @@ export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]
    }
    if(path==='/api/telegram'&&req.method==='GET'){
     const last=db.sql.prepare('SELECT date,start,end,status,attempts,error FROM prompts ORDER BY created DESC LIMIT 1').get()??null;
-    return json(200,{configured:!!bot,ready:!!bot?.ready,connected:!!db.link(),username:bot?.username??null,error:bot?.statusError??'',last});
+    return json(200,{miniAppError:bot?.miniAppError??'',configured:!!bot,ready:!!bot?.ready,connected:!!db.link(),username:bot?.username??null,error:bot?.statusError??'',last});
    }
    if(path==='/api/telegram/link'&&req.method==='POST'){
     if(!bot?.ready||!bot.username)throw new AppError(503,'Бот пока недоступен. Проверьте токен и подключение сервера к Telegram.');

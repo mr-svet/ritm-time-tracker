@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createServer} from 'node:net';
+import {request as httpRequest} from 'node:http';
+import {JournalDB,passwordHash} from '../server/database.mjs';
+test('Actual lab startup never calls Telegram transport when polling is disabled',async t=>{
+ const dir=mkdtempSync(join(tmpdir(),'rhythm-miniapp-start-'));
+ const db=new JournalDB(join(dir,'rhythm.sqlite'));db.sql.prepare('INSERT INTO account VALUES(1,?)').run(passwordHash('synthetic-start-password'));db.close();
+ const portServer=createServer();await new Promise((resolve,reject)=>{portServer.once('error',reject);portServer.listen(0,'127.0.0.1',resolve);});const port=portServer.address().port;await new Promise(resolve=>portServer.close(resolve));
+ const trap='globalThis.fetch=()=>{console.error("UNEXPECTED_TELEGRAM_TRANSPORT");throw new Error("network disabled in test")};';
+ const child=spawn(process.execPath,['--import','data:text/javascript,'+encodeURIComponent(trap),'server/start.mjs'],{cwd:new URL('../',import.meta.url),env:{PATH:process.env.PATH,NODE_ENV:'production',APP_ORIGIN:'https://ritm.test',HOST:'127.0.0.1',PORT:String(port),DATA_DIR:dir,MINI_APP_ENABLED:'1',APP_PATH_PREFIX:'/miniapp-test',TELEGRAM_POLLING_ENABLED:'0',TELEGRAM_BOT_TOKEN:'123456:synthetic-token-for-startup-test-only'}});
+ let output='';child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>output+=chunk);
+ t.after(async()=>{if(child.exitCode===null){child.kill('SIGTERM');await new Promise(resolve=>child.once('exit',resolve));}rmSync(dir,{recursive:true});});
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Lab startup timed out: '+output)),5000);child.once('exit',()=>{clearTimeout(timer);reject(new Error(output));});const ready=chunk=>{if(output.includes('получение сообщений отключено')){clearTimeout(timer);child.stdout.off('data',ready);resolve();}};child.stdout.on('data',ready);});
+ const status=await new Promise((resolve,reject)=>{const req=httpRequest({host:'127.0.0.1',port,path:'/miniapp-test/api/health',headers:{Host:'ritm.test'}},res=>{res.resume();res.on('end',()=>resolve(res.statusCode));});req.on('error',reject);req.end();});
+ assert.equal(status,200);assert.doesNotMatch(output,/UNEXPECTED_TELEGRAM_TRANSPORT/);
+});

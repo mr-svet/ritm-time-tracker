@@ -26,3 +26,6 @@ coverage/
 
 # Generated local feedback bundle
 agentation/
+
+# Also ignore an optional symlink to the identical local development dependencies.
+/node_modules

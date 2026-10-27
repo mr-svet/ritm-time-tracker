@@ -806,3 +806,7 @@ html[lang="en"] .activity-matrix .matrix-cell{min-width:90px}
 [data-theme="light"] .scene-thumb.scene-coast{background-image:url('./assets/scenes/coast.svg')}
 [data-theme="light"] .scenic-overview.scene-forest .day-landscape{background-image:linear-gradient(180deg,#f4faff70,transparent 45%,#e7f1f5ad),url('./assets/scenes/meadow.svg');opacity:1;filter:none}
 [data-theme="light"] .scene-thumb.scene-forest{background-image:url('./assets/scenes/meadow.svg')}
+/* Telegram WebView insets; the regular website is unaffected. */
+html[data-miniapp] body{padding-top:var(--tg-safe-top,0px);padding-bottom:var(--tg-safe-bottom,0px)}
+html[data-miniapp] .sidebar{padding-top:calc(16px + var(--tg-safe-top,0px))}
+html[data-miniapp] .auth-card{max-width:480px}
