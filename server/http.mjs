@@ -6,7 +6,7 @@ import {resolve,sep,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {JournalDB,AppError,digest,secret,verifyPassword} from './database.mjs';
 import {validateTelegramInitData} from './telegram-auth.mjs';
-import {LIMITS} from '../domain.mjs';
+import {LIMITS,ValidationError} from '../domain.mjs';
 import {securityHeaders,contentPolicy} from '../tools/security.mjs';
 import {validatePublicOrigin} from './config.mjs';
 import {clientAddress,parseTrustedProxies} from './http-security.mjs';
@@ -158,7 +158,11 @@ export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]
    }
    if(path==='/api/telegram'&&req.method==='DELETE'){db.unlink();return json(200,{ok:true});}
    throw new AppError(404,'Не найдено.');
-  }catch(error){const unexpected=error.code?.startsWith('ERR_SQLITE')||error.code?.startsWith('SQLITE');json(unexpected?500:error.status??400,{error:unexpected?'Ошибка базы данных. Запрос не сохранён.':error.message||'Ошибка запроса.'});}
+  }catch(error){
+   const sqlite=typeof error?.code==='string'&&(error.code.startsWith('ERR_SQLITE')||error.code.startsWith('SQLITE'));
+   const expected=error instanceof AppError||error instanceof ValidationError;
+   json(sqlite||!expected?500:error.status??400,{error:sqlite?'Ошибка базы данных. Запрос не сохранён.':expected?error.message:'Ошибка сервера. Повторите попытку позже.'});
+  }
  });
  server.requestTimeout=20000;server.headersTimeout=5000;server.keepAliveTimeout=3000;server.maxConnections=50;server.maxHeadersCount=40;
  return server;

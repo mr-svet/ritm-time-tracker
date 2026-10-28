@@ -1,6 +1,7 @@
 // Translation is applied only to authored strings and template fragments.
 // Interpolated journal data is never scanned, translated or used as markup.
 export const translations = {
+ "Ошибка сервера. Повторите попытку позже.":"Server error. Please try again later.",
  "Подключаем ваш журнал…":"Connecting your journal…",
  "Приложение доступно Telegram-аккаунту, привязанному в настройках сайта.":"The app is available to the Telegram account linked in the website settings.",
  "Вернуться в чат бота":"Return to bot chat",
