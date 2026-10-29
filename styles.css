@@ -810,3 +810,9 @@ html[lang="en"] .activity-matrix .matrix-cell{min-width:90px}
 html[data-miniapp] body{padding-top:var(--tg-safe-top,0px);padding-bottom:var(--tg-safe-bottom,0px)}
 html[data-miniapp] .sidebar{padding-top:calc(16px + var(--tg-safe-top,0px))}
 html[data-miniapp] .auth-card{max-width:480px}
+
+/* Display-only gaps in the journal; compatible with the mobile table layout. */
+.journal-gap{background:color-mix(in srgb,var(--muted) 7%,transparent)}
+.journal-gap .activity strong{color:var(--muted);font-weight:500}
+.journal-gap .entry-duration{color:var(--muted)}
+.journal-gap-note{font-size:12px;line-height:1.6;margin:0 0 16px}

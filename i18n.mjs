@@ -1,6 +1,12 @@
 // Translation is applied only to authored strings and template fragments.
 // Interpolated journal data is never scanned, translated or used as markup.
 export const translations = {
+ "Не заполнено":"Unfilled",
+ "Активность не записана":"No activity recorded",
+ "Нет сохранённой записи":"No saved entry",
+ "Незаполненные интервалы показаны отдельно и не считаются записями.":"Unfilled intervals are shown separately and are not counted as entries.",
+ "Незаполненные интервалы скрыты при поиске и фильтрах.":"Unfilled intervals are hidden while searching or filtering.",
+
  "Ошибка сервера. Повторите попытку позже.":"Server error. Please try again later.",
  "Подключаем ваш журнал…":"Connecting your journal…",
  "Приложение доступно Telegram-аккаунту, привязанному в настройках сайта.":"The app is available to the Telegram account linked in the website settings.",

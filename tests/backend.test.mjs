@@ -161,7 +161,7 @@ test('morning Just now choice starts check-ins, and bedtime ends the day',async 
  assert.equal(sent,1);assert.equal(db.sql.prepare('SELECT status FROM wake_prompts').get().status,'sent');
  assert.equal(dueInterval(db.read().workspace,new Date('2026-10-16T07:30:00Z')),null);
  const response=processUpdate(db,callback(700,'w:2026-10-16:now'),wake.getTime());
- const confirmation=response.find(e=>e.method==='sendMessage');assert.match(confirmation.body.text,/07:37/);assert.equal(confirmation.body.reply_markup.inline_keyboard.flat().find(b=>b.callback_data==='a:sleep').text,'Отбой');
+ const confirmation=response.find(e=>e.method==='sendMessage');assert.match(confirmation.body.text,/07:37/);assert.deepEqual(confirmation.body.reply_markup.inline_keyboard,[[{text:'Сегодня выходной целиком',callback_data:'a:dayoff:2026-10-16'}]]);
  assert.equal(db.sql.prepare("SELECT at FROM day_events WHERE type='wake'").get().at,wake.toISOString());
  assert.equal(dueInterval(db.read().workspace,new Date('2026-10-16T08:06:00Z')),null);
  const first=dueInterval(db.read().workspace,new Date('2026-10-16T08:07:00Z'));assert.deepEqual([first.start,first.end],[457,487]);

@@ -1084,6 +1084,27 @@ export function slots(w,date,now=localNow(schedule(w,date).timezone)) {
   return [...entries.map(e=>({...e,status:'entry'})),...result].sort((a,b)=>a.start-b.start);
 }
 export function nextGap(w,date,now=localNow(schedule(w,date).timezone)) { return slots(w,date,now).find(s=>s.status==='missing') ?? null; }
+// Display-only markers: always subtract the complete journal, even when entries are filtered.
+export function journalTimeline(w,entries,from,to,at=new Date(),includeMissing=true) {
+  const rows=[...entries];
+  if(includeMissing&&validDate(from)&&validDate(to)&&from<=to) {
+    for(let date=from;date<=to;) {
+      const s=schedule(w,date),current=localNow(s.timezone,at);
+      if(date>current.date)break;
+      const sleep=w.dayEvents?.find(e=>e.date===date&&e.type==='sleep');
+      const bedtime=sleep?localNow(s.timezone,new Date(sleep.at)):null;
+      const limit=bedtime?.date===date?bedtime.minute:s.end;
+      for(const slot of slots(w,date,current)) {
+        if(!['missing','future'].includes(slot.status))continue;
+        const end=Math.min(slot.end,limit);
+        if(end>slot.start&&(date<current.date||end<=current.minute))rows.push({date,start:slot.start,end,status:'missing'});
+      }
+      if(date===to)break;
+      date=addDays(date,1);
+    }
+  }
+  return rows.sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start);
+}
 export function nextPrompt(w,now=localNow(w.settings.timezone)) {
   const s=schedule(w,now.date);if(!s.days.includes(weekday(now.date))||now.minute>=s.end)return null;
   const start=s.start+Math.max(0,Math.floor((now.minute-s.start)/s.step))*s.step;

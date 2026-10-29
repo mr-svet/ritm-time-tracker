@@ -29,7 +29,9 @@ test('public home serves Find Your Flow in both languages and keeps the journal 
   assert.ok(!html.includes('<strong>07</strong>'));
   assert.ok(!html.includes('Follow what matters to you.'));
   assert.ok(html.includes(language==='ru'?'Немного ясности меняет многое.':'A little clarity goes a long way.'));
-  if(language==='ru'){assert.ok(html.includes('Ваши дни под другим углом.'));assert.ok(!/Launch now|Developer sign-in|time journal|A little clarity/.test(html));}
+  assert.match(html,new RegExp('<a class="launch" href="/today\\?visitor=1&amp;lang='+language+'"><span>Launch now</span>'));
+  assert.ok(!html.includes('id="slide-launch"'));
+  if(language==='ru'){assert.ok(html.includes('Ваши дни под другим углом.'));assert.ok(!/Developer sign-in|time journal|A little clarity/.test(html));}
   assert.match(response.headers.get('content-security-policy'),/font-src data:/);
   assert.match(response.headers.get('content-security-policy'),/connect-src 'none'/);
  }
