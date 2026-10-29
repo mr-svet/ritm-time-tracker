@@ -34,3 +34,13 @@ test('day off has no gap markers, while recorded activities remain visible',()=>
  const w=fixture();w.pauses=[{date,start:0,end:1440,type:'ended'}];
  assert.deepEqual(journalTimeline(w,w.entries,date,date,at),w.entries);
 });
+
+test('past-day journal markers account for all summary missing minutes without pagination hiding them',async()=>{
+ const {summary}=await import('../domain.mjs');const w=fixture();
+ w.settings.start=540;w.settings.end=1080;w.snapshots[date]={...w.settings};
+ w.dayEvents=[{date,type:'wake',at:date+'T09:00:00Z',timezone:'UTC'},{date,type:'sleep',at:date+'T18:00:00Z',timezone:'UTC'}];
+ w.entries=[{...w.entries[0],start:540,end:1040}];
+ const now={date:'2026-10-29',minute:600},stats=summary(w,[date],now);
+ const rows=journalTimeline(w,w.entries,date,date,new Date('2026-10-29T10:00:00Z'));
+ assert.equal(stats.missing,40);assert.equal(rows.filter(r=>r.status==='missing').reduce((sum,r)=>sum+r.end-r.start,0),stats.missing);assert.ok(rows.length<50);
+});

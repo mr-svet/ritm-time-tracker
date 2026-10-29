@@ -42,10 +42,27 @@ test('SDK events update theme, device insets, viewport and chat navigation',()=>
  h.sdk.viewportStableHeight=480;h.sdk.viewportHeight=480;h.sdkEvents.viewportChanged();
  assert.equal(h.doc.documentElement.dataset.keyboard,'true','keyboard stays detected when Telegram settles at the shorter height');
  h.emit('ritm:dirty',{dirty:true});assert.ok(h.calls.includes('dirty'));
- h.emit('ritm:appearance',{theme:'light'});assert.ok(h.calls.includes('#eef3ec'));
+ h.emit('ritm:appearance',{theme:'light'});assert.ok(h.calls.includes('#edf4fa'));
  h.win.location.search='?view=stats';h.emit('ritm:navigate');h.sdkEvents.back();assert.ok(h.calls.includes('show'));assert.ok(h.calls.includes('back'));
  h.emit('ritm:open-chat');assert.equal(h.calls.at(-1),'close');
 });
 test('older Telegram clients can omit new inset and chrome methods',()=>{
  assert.doesNotThrow(()=>installTelegramPlatform({ready(){},expand(){},onEvent(){}},new EventTarget(),{documentElement:{dataset:{},style:{setProperty(){}}}}));
+});
+
+test('visitor picture follows theme while owner keeps the selected scene',async()=>{
+ const {dayScene}=await import('../telegram-platform.mjs');
+ assert.equal(dayScene({guest:true,theme:'light',selected:'coast'}),'mountains');
+ assert.equal(dayScene({guest:true,theme:'dark',selected:'mountains'}),'forest');
+ assert.equal(dayScene({theme:'light',selected:'coast'}),'coast');
+ assert.equal(dayScene({theme:'dark',selected:'lake'}),'lake');
+ assert.equal(dayScene({selected:'invalid'}),'forest');
+});
+test('light chart palette is presentation-only, opaque and distinct; dark colors remain unchanged',async()=>{
+ const {presentationColor}=await import('../telegram-platform.mjs');
+ const colors=['#42d7a6','#7ba7ff','#f5b95f','#b799fa','#ee829d','#6dd4e6','#c6d788'];
+ assert.equal(new Set(colors.map(c=>presentationColor(c,'light'))).size,colors.length);
+ for(const color of colors){assert.equal(presentationColor(color,'dark'),color);assert.match(presentationColor(color,'light'),/^#[0-9a-f]{6}$/);assert.notEqual(presentationColor(color,'light'),color);}
+ assert.equal(presentationColor('#123456','dark'),'#123456');
+ assert.match(presentationColor('#123456','light'),/^#[0-9a-f]{6}$/);
 });

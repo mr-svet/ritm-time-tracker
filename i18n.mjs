@@ -1,6 +1,14 @@
 // Translation is applied only to authored strings and template fragments.
 // Interpolated journal data is never scanned, translated or used as markup.
 export const translations = {
+ "Сон и пробуждение":"Sleep and waking",
+ "Подъём · Отбой · Ночной сон":"Wake-up · Bedtime · Night sleep",
+ "Таблица сводки":"Overview table",
+ "На весь экран":"Expand table",
+ "Чтобы увидеть незаполненные интервалы, очистите поиск.":"Clear the search to see unfilled intervals.",
+ "Завершённых незаполненных интервалов за выбранные даты нет.":"There are no completed unfilled intervals in the selected dates.",
+ "Эти интервалы показаны отдельными строками ниже.":"These intervals are shown as separate rows below.",
+
  "Не заполнено":"Unfilled",
  "Активность не записана":"No activity recorded",
  "Нет сохранённой записи":"No saved entry",

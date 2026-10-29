@@ -860,3 +860,76 @@ html[data-miniapp] .auth-card{max-width:480px}
 [data-theme="dark"] .scenic-overview.scene-meadow .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/scenes/meadow.jpg'),url('./assets/scenes/meadow.svg');background-size:cover;background-position:center;background-color:#12362e}
 [data-theme="dark"] .scenic-overview.scene-coast .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/scenes/coast.jpg'),url('./assets/scenes/coast.svg');background-size:cover;background-position:center;background-color:#12362e}
 [data-theme="light"] #app .home-top .scenic-overview{background:#0b2925;border-color:#8ca4b5}
+
+/* Cool, legible illustration and motion palette for the light interface. */
+:root[data-theme="light"]{--gold-ink:#456d8a;--section-ink:#294c66;--motion-ink:#477b9f;--motion-line:#7398b3}
+[data-theme="light"] *{scrollbar-color:#8da9bd #e4edf4}
+[data-theme="light"] #app .matrix-scroll{scrollbar-color:#8da9bd #e4edf4}
+[data-theme="light"] ::-webkit-scrollbar-track{background:#e4edf4;border-radius:10px}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:#8da9bd;border:3px solid #e4edf4;border-radius:10px}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:#658ba8}
+[data-theme="light"] input[type="range"],[data-theme="light"] input[type="checkbox"],[data-theme="light"] input[type="radio"]{accent-color:#5c83a2;color-scheme:light}
+[data-theme="light"] #app .nav-aurora path{stroke:#7398b3;opacity:.95;filter:drop-shadow(0 0 3px #6b94b03d)}
+[data-theme="light"] #app .nav-aurora circle{fill:#477b9f;filter:drop-shadow(0 0 5px #6a9abc66)}
+[data-theme="light"] #app .aurora-orbit{border-color:#7599b3;opacity:.85;box-shadow:0 0 7px #83a6be18}
+[data-theme="light"] #app .aurora-orbit:nth-child(2){border-color:#8ca9bd}
+[data-theme="light"] #app .aurora-orbit:nth-child(3){border-color:#a0b9cc}
+[data-theme="light"] #app .aurora-art:before{background:radial-gradient(ellipse at 50% 28%,#94b4cb35,transparent 65%),radial-gradient(ellipse at 50% 72%,#a4bdd22b,transparent 65%)}
+[data-theme="light"] #app .nav-aurora>span{color:#55758c}
+[data-theme="light"] #app .donut{background:conic-gradient(#5b84a3 var(--angle),#dbe7ef 0)}
+[data-theme="light"] #app .donut-text strong,[data-theme="light"] #app .category-donut strong{color:#365b77}
+[data-theme="light"] #app .category-chart-core{fill:#f4f8fb;stroke:#c2d5e3}
+[data-theme="light"] #app .category-donut svg{filter:drop-shadow(0 5px 9px #537b961c)}
+[data-theme="light"] #app .bar-fill,[data-theme="light"] #app .projects-chart-card .bar-fill{background:linear-gradient(90deg,#92afc6,#567f9d)}
+[data-theme="light"] #app .project-row:nth-of-type(3n) .bar-fill{background:linear-gradient(90deg,#a0b9c8,#638b9f)}
+[data-theme="light"] #app .project-row:nth-of-type(3n + 2) .bar-fill{background:linear-gradient(90deg,#abb4ce,#7a87a9)}
+[data-theme="light"] #app .week-card .daily-bar{background:linear-gradient(180deg,#aac5d9,#638ca9);box-shadow:inset 0 1px #f7fbff}
+[data-theme="light"] #app .week-card .daily-col.selected .daily-bar{background:linear-gradient(180deg,#739cb9,#3f6f92);box-shadow:inset 0 1px #c7ddeb}
+[data-theme="light"] #app .week-card .daily-col:not(.has-time) .daily-bar{background:#d6e3ec;box-shadow:none}
+[data-theme="light"] #app .week-card .daily-col.selected>span,[data-theme="light"] #app .week-card .daily-bar strong{color:#3d617c}
+[data-theme="light"] #app .legend-row .value small{color:#5d788e}
+[data-theme="light"] #app .home-top .scenic-overview{--text:#284b65;--muted:#4c6b83;--subtle:#607f96;--accent:#5f87a5;--border:#b1c7d8;background:#e7f0f7;color:#284b65}
+[data-theme="light"] #app .scenic-overview .dial-track{fill:#edf4f8a6;stroke:#8faec38c}
+[data-theme="light"] #app .scenic-overview .dial-inner{fill:#f9fcffb3;stroke:#98b6cb70}
+[data-theme="light"] #app .scenic-overview .dial-progress{stroke:#507e9f;filter:drop-shadow(0 0 4px #769eb94d)}
+[data-theme="light"] #app .scenic-overview .dial-ticks line{stroke:#6f90a6a6}
+[data-theme="light"] #app .scenic-overview .dial-ticks .major-tick{stroke:#507790c9}
+[data-theme="light"] #app .scenic-overview .scenic-caption strong,[data-theme="light"] #app .scenic-overview .scenic-missing strong{color:#365b77}
+[data-theme="light"] #app .scenic-overview .scenic-open{background:#dae8f2c4;border-color:#a3bed1;color:#335c7b}
+[data-theme="light"] #app .scenic-overview .pill{background:#edf4f9c9;border-color:#a6c0d3;color:#496d88}
+[data-theme="light"] #app .scenic-overview .scene-change{color:#466e8b}
+
+/* One collapsed group for day events; time values retain their centered alignment. */
+.activity-matrix #matrix-day-details[hidden]{display:none!important}
+.activity-matrix .matrix-day-group th,.activity-matrix .matrix-day-group td{vertical-align:middle}
+.day-group-toggle{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;border:0;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer;padding:7px 0;min-height:38px}
+.day-group-toggle .icon{width:15px;height:15px;flex:none;transition:transform .18s}
+.day-group-toggle[aria-expanded="true"] .icon{transform:rotate(180deg)}
+.day-group-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.day-group-description{font-size:11px;line-height:1.5;color:var(--muted)}
+.activity-matrix .matrix-sleep-row th{text-align:left}
+.journal-gap-note{padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+
+/* Day-long timeline and stronger category accents on light surfaces. */
+.timeline-boundary .timeline-title b{color:var(--accent);max-width:none}
+.timeline-boundary .timeline-content{border-bottom:0}
+[data-theme="light"] #app .category-token{background:color-mix(in srgb,var(--token-color) 12%,#f7fbff);border-color:color-mix(in srgb,var(--token-color) 48%,#d3e2ef);color:#28455f;box-shadow:inset 0 1px #ffffffb3}
+[data-theme="light"] #app .category-token strong{color:var(--token-color);font-weight:650}
+[data-theme="light"] #app .category-token i{width:7px;height:7px;box-shadow:0 0 0 3px color-mix(in srgb,var(--token-color) 12%,transparent)}
+[data-theme="light"] #app .timeline-row.entry{background:linear-gradient(90deg,color-mix(in srgb,var(--activity-color) 9%,transparent),transparent 85%);border-radius:7px}
+[data-theme="light"] #app .timeline-row.entry .timeline-title b{color:var(--activity-color)}
+[data-theme="light"] #app .timeline-axis i{border-color:#edf4fa;box-shadow:0 0 0 1px #a8c0d3}
+[data-theme="light"] #app .timeline-row.entry .timeline-axis i{box-shadow:0 0 0 1px var(--activity-color),0 0 0 4px color-mix(in srgb,var(--activity-color) 12%,transparent)}
+[data-theme="light"] #app .timeline-row.missing{background:linear-gradient(90deg,#c78b2712,transparent);border-radius:7px}
+[data-theme="light"] #app .timeline-row.missing .timeline-axis i{background:#c18a32;box-shadow:0 0 0 1px #b47e28}
+[data-theme="light"] #app .timeline-boundary .timeline-title b{color:#316e9e}
+[data-theme="light"] #app .scenic-overview .orbit-value,
+[data-theme="light"] #app .scenic-overview .orbit-value .orbit-label,
+[data-theme="light"] #app .scenic-overview .orbit-value strong,
+[data-theme="light"] #app .scenic-overview .orbit-value strong small,
+[data-theme="light"] #app .scenic-overview .orbit-value>span:last-child{color:#205f96;text-shadow:none}
+/* Explicit borders survive separate tbody groups and sticky label shadows. */
+#app .activity-matrix .matrix-day-group th,#app .activity-matrix .matrix-day-group td{height:37px;padding:0 8px;border-bottom:1px solid #5985ad;box-shadow:inset 0 -1px #5985ad}
+#app .activity-matrix .matrix-day-group .day-group-toggle{min-height:36px;padding:0;line-height:1.2}
+#app .activity-matrix .matrix-day-group .day-group-description{line-height:1.2}
+#app .activity-matrix .matrix-day-group th:first-child{box-shadow:2px 0 0 var(--border),inset 0 -1px #5985ad}

@@ -1,4 +1,19 @@
 // Presentation only. Never read or persist initData, credentials or journal data.
+export function dayScene({guest=false,theme='dark',selected='forest'}={}){
+ if(guest)return theme==='light'?'mountains':'forest';
+ return ['forest','dawn','mountains','lake','meadow','coast'].includes(selected)?selected:'forest';
+}
+
+export function presentationColor(value,theme='dark'){
+ const color=/^#[0-9a-f]{6}$/i.test(value||'')?value.toLowerCase():'#a6bbb4';
+ if(theme!=='light')return color;
+ const defaults=['#42d7a6','#7ba7ff','#f5b95f','#b799fa','#ee829d','#6dd4e6','#c6d788'];
+ const palette=['#18866f','#3876cb','#b47624','#825ac1','#bc5076','#21879f','#6c8528'];
+ const index=defaults.indexOf(color);if(index>=0)return palette[index];
+ const tint=[83,123,150];
+ return '#'+[1,3,5].map((offset,i)=>Math.round(parseInt(color.slice(offset,offset+2),16)*.72+tint[i]*.28).toString(16).padStart(2,'0')).join('');
+}
+
 export function telegramAppearance({miniapp=false,prefs={},legacy={},colorScheme}={}){
  prefs=prefs&&typeof prefs==='object'?prefs:{};
  legacy=legacy&&typeof legacy==='object'?legacy:{};
@@ -52,7 +67,7 @@ export function installTelegramPlatform(sdk,win,doc){
  });
  win.addEventListener('ritm:appearance',event=>{
   if(!supported('6.1'))return;
-  const color=event.detail.theme==='light'?'#eef3ec':'#051f20';
+  const color=event.detail.theme==='light'?'#edf4fa':'#051f20';
   try{sdk.setHeaderColor?.(color);sdk.setBackgroundColor?.(color);}catch{}
  });
  win.addEventListener('ritm:open-chat',()=>sdk.close?.());

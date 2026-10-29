@@ -546,3 +546,37 @@ html[data-miniapp][data-keyboard="true"] .modal{margin-block:0;top:calc(var(--ri
  html[data-miniapp][data-keyboard="true"] .mobile-nav{display:none}
  html[data-miniapp][data-keyboard="true"] #toast{bottom:16px}
 }
+
+/* The table can fill the available window on desktop as well as mobile. */
+#app .matrix-expand{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:auto;min-width:40px;min-height:40px;padding:8px 11px;white-space:nowrap}
+#app .matrix-expand-label{font-size:11px;font-weight:500}
+#app .matrix-section .overview-head{flex-wrap:wrap}
+#app .main[data-section="trends"]>.matrix-section[data-expanded="true"]{
+ position:fixed;inset:max(8px,env(safe-area-inset-top),var(--tg-safe-top,0px)) max(8px,env(safe-area-inset-right),var(--tg-safe-right,0px)) max(8px,env(safe-area-inset-bottom),var(--tg-safe-bottom,0px)) max(8px,env(safe-area-inset-left),var(--tg-safe-left,0px));
+ width:auto;max-width:none;height:auto;max-height:none;margin:0;z-index:200;display:flex;flex-direction:column;padding:20px;background:var(--surface);box-shadow:0 0 0 100vmax #08212f80;border-radius:16px;
+}
+#app .main[data-section="trends"]>.matrix-section[data-expanded="true"] .matrix-scroll{flex:1;min-height:0;height:auto;max-height:none}
+#app .main[data-section="trends"]>.matrix-section[data-expanded="true"] .overview-head,
+#app .main[data-section="trends"]>.matrix-section[data-expanded="true"] .matrix-navigation,
+#app .main[data-section="trends"]>.matrix-section[data-expanded="true"] .matrix-mobile-help{flex:none}
+html:has(.matrix-section[data-expanded="true"]),html:has(.matrix-section[data-expanded="true"]) body{overflow:hidden}
+#app .main:has(>.matrix-section[data-expanded="true"]){position:relative;z-index:200}
+#app:has(.matrix-section[data-expanded="true"]) .site-header,
+#app:has(.matrix-section[data-expanded="true"]) .sidebar,
+#app:has(.matrix-section[data-expanded="true"]) .mobile-nav,
+#app:has(.matrix-section[data-expanded="true"]) .page-footer{visibility:hidden}
+@media(max-width:900px){
+ #app .matrix-expand{width:40px;height:40px;padding:8px}
+ #app .matrix-expand-label{display:none}
+ #app .main[data-section="trends"]>.matrix-section[data-expanded="true"]{padding:12px;border-radius:12px}
+ #app .activity-matrix .matrix-sleep-row th{text-align:left}
+ #app .activity-matrix .day-group-toggle{font-size:11px;gap:5px}
+ #app .activity-matrix .day-group-description{font-size:10px}
+}
+
+@media(max-width:900px){
+ #app .activity-matrix .matrix-day-group th,#app .activity-matrix .matrix-day-group td{height:29px;padding:0 4px;border-bottom:1px solid #5985ad}
+ #app .activity-matrix .matrix-day-group th:first-child{padding:0 6px}
+ #app .activity-matrix .matrix-day-group .day-group-toggle{min-height:28px;font-size:10px;line-height:1.15}
+ #app .activity-matrix .matrix-day-group .day-group-description{font-size:10px;line-height:1.15}
+}
