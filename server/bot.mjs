@@ -182,7 +182,11 @@ export function processUpdate(db,update,at=Date.now(),siteURL='http://127.0.0.1:
      const value=previous.activities?.at(-1)?.text??previous.text,target=w.entries.find(e=>e.date===p.date&&e.start===p.start&&e.end===p.end);
      db.sql.exec('DELETE FROM category_choices');
      if(target&&(target.activities?target.activities.some(a=>a.text===value):target.text===value))say(localized(`Это занятие уже записано: ${range(p)}. Повторная запись не добавлена.`,`This activity is already logged for ${range(p)}. No duplicate was added.`));
-     else apply(p,value);
+     else{
+      const inheritedCategory=w.categories.some(c=>c.id===previous.category)?previous.category:'';
+      const inheritedProject=w.projects.some(item=>item.id===previous.project)?previous.project:'';
+      apply(p,value,sentAt.toISOString(),target?target.category:inheritedCategory,target?target.project:inheritedProject);
+     }
     }else say(localized('Предыдущего занятия нет. Ответьте текстом на вопрос.','There is no previous activity. Reply to the question with a short description.'));
    }
    else if((match=/^([ce]):([a-f0-9]{12}):([a-z0-9-]{36})$/.exec(data))){const pending=db.sql.prepare('SELECT text,sent_at FROM pending WHERE id=? AND expires>?').get(match[2],at);if(pending){apply(promptRow(db,match[3]),pending.text,pending.sent_at??null);db.sql.prepare('DELETE FROM pending WHERE id=?').run(match[2]);}else say(localized('Выбор устарел. Отправьте текст ещё раз.','That choice has expired. Send your activity again.'));}

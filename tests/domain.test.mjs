@@ -53,3 +53,20 @@ test('each split part is checked and current interval follows the saved step and
  assert.equal(validateEntryMoment(entry('last',1410,1440,{date:'2026-10-17'}),w,new Date('2026-10-17T18:59:00Z')),true);
  assert.throws(()=>validateEntryMoment(entry('next',0,30,{date:'2026-10-18'}),w,new Date('2026-10-17T18:59:00Z')),/Будущий/);
 });
+
+test('coverage excludes time before waking and after bedtime, retaining real evening gaps',()=>{
+ const w=emptyWorkspace(),day='2026-10-28';
+ w.settings={...w.settings,timezone:'UTC',start:0,end:1440,step:30};ensureDay(w,day);
+ w.dayEvents=[{date:day,type:'wake',at:day+'T08:56:00Z',timezone:'UTC'},{date:day,type:'sleep',at:day+'T23:36:00Z',timezone:'UTC'}];
+ w.entries=[{...entry('awake',536,1376),date:day}];
+ const stats=summary(w,[day],{date:day,minute:1440});
+ assert.equal(stats.expected,880);assert.equal(stats.within,840);assert.equal(stats.missing,40);assert.equal(stats.coverage,95);
+ assert.deepEqual(slots(w,day,{date:day,minute:1440}).filter(s=>s.status==='missing').map(s=>[s.start,s.end]),[[1376,1406],[1406,1416]]);
+});
+test('waking boundaries retain historical schedules, explicit pauses and off-window entries',()=>{
+ const w=fixture();w.dayEvents=[{date,type:'wake',at:date+'T10:00:00Z',timezone:'UTC'},{date,type:'sleep',at:date+'T11:30:00Z',timezone:'UTC'}];
+ w.snapshots[date].timezone='UTC';w.pauses=[{date,start:630,end:660,type:'pause'}];
+ w.entries=[entry('outside',540,570),entry('inside',600,630)];
+ const stats=summary(w,[date],{date,minute:720});
+ assert.equal(stats.expected,60);assert.equal(stats.paused,30);assert.equal(stats.within,30);assert.equal(stats.outside,30);assert.equal(stats.coverage,50);
+});

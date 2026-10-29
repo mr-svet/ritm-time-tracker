@@ -816,3 +816,47 @@ html[data-miniapp] .auth-card{max-width:480px}
 .journal-gap .activity strong{color:var(--muted);font-weight:500}
 .journal-gap .entry-duration{color:var(--muted)}
 .journal-gap-note{font-size:12px;line-height:1.6;margin:0 0 16px}
+
+/* Quiet, focusable empty cells; the add affordance appears only on interaction. */
+.activity-matrix .matrix-add-hint{opacity:0;transition:opacity .15s ease;pointer-events:none}
+.activity-matrix .matrix-cell-empty{opacity:1;border-color:transparent}
+.activity-matrix .event-time-button.event-time-empty{border:0;background:transparent}
+.activity-matrix .matrix-cell-empty:hover .matrix-add-hint,
+.activity-matrix .matrix-cell-empty:focus-visible .matrix-add-hint,
+.activity-matrix .event-time-empty:hover .matrix-add-hint,
+.activity-matrix .event-time-empty:focus-visible .matrix-add-hint{opacity:1}
+.activity-matrix .matrix-sleep-row th,.activity-matrix .matrix-sleep-row td{text-align:center;vertical-align:middle}
+.activity-matrix .matrix-sleep-row .sleep-duration{display:grid;place-items:center;min-height:45px;width:100%;text-align:center}
+
+/* Stronger separation of light surfaces, controls and text. */
+:root[data-theme="light"]{--canvas:#d4dfe6;--recess:#c3d1db;--surface:#ffffff;--raised:#ffffff;--text:#172a3a;--muted:#405767;--subtle:#4a6272;--border:#91a8b8;--accent:#213e56}
+[data-theme="light"] body{background:var(--canvas)}
+[data-theme="light"] #app .card,[data-theme="light"] #app .settings-card,[data-theme="light"] #app .trend-overview{background:#fff;border-color:#9aafbd;box-shadow:0 5px 18px #233e5114}
+[data-theme="light"] #app .capture-card{background:#f7fafc;border-color:#8ca4b5}
+[data-theme="light"] #app .site-header{background:#edf3f7;border-color:#9aafbd}
+[data-theme="light"] #app .page-heading{background:#e9f0f5;border-color:#9aafbd}
+[data-theme="light"] #app .field,[data-theme="light"] #app .settings-card .field,[data-theme="light"] #app .capture-card .field{background:#fff;border-color:#839eaf;color:#172a3a}
+[data-theme="light"] #app .field::placeholder{color:#536a79;opacity:1}
+[data-theme="light"] #app .field:focus-visible{border-color:#245d83;outline:2px solid #245d83;outline-offset:2px;box-shadow:none}
+[data-theme="light"] #app .btn.ghost,[data-theme="light"] #app .icon-button,[data-theme="light"] #app .language-toggle,[data-theme="light"] #app .theme-toggle{background:#dae5ed;color:#213e56;border:1px solid #879faf;box-shadow:inset 0 1px #ffffff}
+[data-theme="light"] #app .btn.ghost:hover,[data-theme="light"] #app .icon-button:hover{background:#c7d9e5;border-color:#4f758e}
+[data-theme="light"] #app .btn.primary{background:#213e56;color:#fff;border-color:#213e56}
+[data-theme="light"] #app .btn.primary:hover{background:#142e43;border-color:#142e43}
+[data-theme="light"] #app .date-control{background:#fff;border:1px solid #91a8b8}
+[data-theme="light"] #app .segmented{background:#e2eaf0;border:1px solid #91a8b8}
+[data-theme="light"] #app .segmented button.active,[data-theme="light"] #app .auth-roles [aria-pressed="true"]{background:#213e56;color:#fff}
+[data-theme="light"] #app .mobile-nav{background:#edf3f7;border-color:#91a8b8}
+[data-theme="light"] #app .activity-matrix td,[data-theme="light"] #app .activity-matrix th{border-color:#a5b8c5}
+[data-theme="light"] #app .activity-matrix tbody tr:nth-child(even) td{background:#eaf1f6}
+[data-theme="light"] #app .activity-matrix tbody tr:hover td{background:#dce8f0}
+[data-theme="light"] #app .activity-matrix .matrix-cell-empty:hover,[data-theme="light"] #app .activity-matrix .matrix-cell-empty:focus-visible{background:#bfd5e4;border-color:#4f758e;color:#173b54}
+[data-theme="light"] #app .journal-gap{background:#eaf1f6}
+
+/* A tiny illustration is visible while the high-resolution photo arrives. */
+[data-theme="dark"] .scenic-overview.scene-forest .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/rhythm-forest.png'),url('./assets/scenes/meadow.svg');background-size:cover;background-position:center;background-color:#12362e}
+[data-theme="dark"] .scenic-overview.scene-dawn .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/scenes/dawn.jpg'),url('./assets/scenes/dawn.svg');background-size:cover;background-position:center;background-color:#12362e}
+[data-theme="dark"] .scenic-overview.scene-mountains .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/scenes/mountains.jpg'),url('./assets/scenes/mountains.svg');background-size:cover;background-position:center;background-color:#12362e}
+[data-theme="dark"] .scenic-overview.scene-lake .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/scenes/lake.jpg'),url('./assets/scenes/lake.svg');background-size:cover;background-position:center;background-color:#12362e}
+[data-theme="dark"] .scenic-overview.scene-meadow .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/scenes/meadow.jpg'),url('./assets/scenes/meadow.svg');background-size:cover;background-position:center;background-color:#12362e}
+[data-theme="dark"] .scenic-overview.scene-coast .day-landscape{background-image:linear-gradient(180deg,#0b292954,transparent 42%,#0b2118a1 86%,#061c18db),url('./assets/scenes/coast.jpg'),url('./assets/scenes/coast.svg');background-size:cover;background-position:center;background-color:#12362e}
+[data-theme="light"] #app .home-top .scenic-overview{background:#0b2925;border-color:#8ca4b5}

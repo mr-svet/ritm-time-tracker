@@ -1047,19 +1047,27 @@ export function subtractRanges(base, cuts) {
   return out;
 }
 const length = ranges => ranges.reduce((n,r)=>n+r.end-r.start,0);
+function trackingBounds(w,date) {
+  const s=schedule(w,date);
+  const wake=w.dayEvents?.find(e=>e.date===date&&e.type==='wake');
+  const sleep=w.dayEvents?.find(e=>e.date===date&&e.type==='sleep');
+  const waking=wake?localNow(s.timezone,new Date(wake.at)):null;
+  const bedtime=sleep?localNow(s.timezone,new Date(sleep.at)):null;
+  return {start:waking?.date===date?Math.max(s.start,waking.minute):s.start,end:bedtime?.date===date?Math.min(s.end,bedtime.minute):s.end};
+}
 export function expectedRanges(w,date,now=localNow(schedule(w,date).timezone)) {
   const s=schedule(w,date);if(!s.days.includes(weekday(date))||date>now.date) return [];
-  const end=date===now.date?Math.min(s.end,now.minute):s.end;
-  if(end<=s.start)return [];
-  return subtractRanges([{start:s.start,end}],w.pauses.filter(p=>p.date===date));
+  const bounds=trackingBounds(w,date),end=date===now.date?Math.min(bounds.end,now.minute):bounds.end;
+  if(end<=bounds.start)return [];
+  return subtractRanges([{start:bounds.start,end}],w.pauses.filter(p=>p.date===date));
 }
 export function summary(w,dates,now) {
   let expected=0,tracked=0,within=0,paused=0;const categories=Object.create(null),projects=Object.create(null);
   for(const date of dates) {
     const s=schedule(w,date),dayClock=now??localNow(s.timezone);
     const ranges=expectedRanges(w,date,dayClock);expected+=length(ranges);
-    const end=date===dayClock.date?Math.min(s.end,dayClock.minute):date>dayClock.date?s.start:s.end;
-    if(s.days.includes(weekday(date))) paused+=Math.max(0,end-s.start)-length(ranges);
+    const bounds=trackingBounds(w,date),end=date===dayClock.date?Math.min(bounds.end,dayClock.minute):date>dayClock.date?bounds.start:bounds.end;
+    if(s.days.includes(weekday(date))) paused+=Math.max(0,end-bounds.start)-length(ranges);
     for(const e of w.entries.filter(e=>e.date===date)) {
       const n=e.end-e.start;tracked+=n;categories[e.category]=(categories[e.category]||0)+n;projects[e.project]=(projects[e.project]||0)+n;
       for(const r of ranges) within+=Math.max(0,Math.min(e.end,r.end)-Math.max(e.start,r.start));
@@ -1072,10 +1080,9 @@ export function slots(w,date,now=localNow(schedule(w,date).timezone)) {
   const result=[]; const entries=w.entries.filter(e=>e.date===date).sort((a,b)=>a.start-b.start);
   if(!s.days.includes(weekday(date)))return entries.map(e=>({...e,status:'entry'}));
   const cuts=mergedRanges(w.pauses.filter(p=>p.date===date));
-  const wake=w.dayEvents?.find(e=>e.date===date&&e.type==='wake');
-  const first=wake?Math.max(s.start,localNow(wake.timezone,new Date(wake.at)).minute):s.start;
-  for(let start=first;start<s.end;start+=s.step) {
-    const end=Math.min(start+s.step,s.end);
+  const bounds=trackingBounds(w,date);
+  for(let start=bounds.start;start<bounds.end;start+=s.step) {
+    const end=Math.min(start+s.step,bounds.end);
     for(const r of subtractRanges([{start,end}],entries)) {
       const boundaries=[r.start,r.end,...cuts.flatMap(c=>[c.start,c.end]).filter(n=>n>r.start&&n<r.end)].sort((a,b)=>a-b);
       for(let i=0;i<boundaries.length-1;i++){const part={start:boundaries[i],end:boundaries[i+1]};result.push({...part,date,status:cuts.some(c=>overlap(c,part))?'pause':date>now.date||(date===now.date&&part.end>now.minute)?'future':'missing'});}

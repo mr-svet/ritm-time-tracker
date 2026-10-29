@@ -85,6 +85,14 @@ export function createAppServer({db,bot=null,publicOrigin=null,trustedProxies=[]
      if(feedback.setCookie)res.setHeader('Set-Cookie',feedback.setCookie);
     }
     if(name==='index.html'&&basePath)data=Buffer.from(data.toString().replace('<html ',`<html data-base-path="${basePath}" `).replaceAll('href="/','href="'+basePath+'/').replaceAll('src="/','src="'+basePath+'/'));
+    // Cache only allowlisted public images. HTML, scripts and private API remain no-store.
+    if(['.png','.jpg','.svg'].includes(extname(file))){
+     const etag='"'+digest(data)+'"';
+     res.setHeader('Cache-Control','public, max-age=0, must-revalidate');res.setHeader('ETag',etag);
+     if(req.headers['if-none-match']?.split(',').some(value=>value.trim()===etag)){
+      res.writeHead(304);res.end();return;
+     }
+    }
     res.writeHead(200,{'Content-Type':types[extname(file)],'Content-Length':data.length});res.end(req.method==='HEAD'?undefined:data);return;
    }
    if(!['GET','POST','PUT','DELETE'].includes(req.method))throw new AppError(405,'Метод не поддерживается.');

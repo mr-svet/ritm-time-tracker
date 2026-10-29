@@ -362,3 +362,18 @@ test('bedtime from an older bot can be undone by command after deployment',t=>{
  const db=new JournalDB(':memory:');t.after(()=>db.close());scheduled(db);linked(db);db.mutate(w=>w.dayEvents.push({date:'2026-10-16',type:'sleep',at:'2026-10-16T09:55:00.000Z',timezone:'UTC'}));
  const answer=processUpdate(db,message(40010,'/undo_sleep',{reply:null}),at.getTime());assert.match(answer.at(-1).body.text,/Bedtime undone/);assert.equal(db.read().workspace.dayEvents.some(e=>e.type==='sleep'),false);
 });
+
+test('continuation copies the last activity together with category and project',t=>{
+ const db=fixture(t);scheduled(db);linked(db);const id=prompt(db);
+ db.mutate(w=>w.entries.push(entry({date:'2026-10-16',start:540,end:570,category:'cat-0',project:'p-1',text:'First · Last',activities:[{id:uid(),text:'First',at:null},{id:uid(),text:'Last',at:null}]})));
+ processUpdate(db,callback(99031,'r:'+id),at.getTime());
+ const continued=db.read().workspace.entries.find(e=>e.start===570);
+ assert.equal(continued.text,'Last');assert.equal(continued.category,'cat-0');assert.equal(continued.project,'p-1');
+});
+test('continuation does not reclassify activities already saved in the target interval',t=>{
+ const db=fixture(t);scheduled(db);linked(db);const id=prompt(db);
+ db.mutate(w=>w.entries.push(entry({date:'2026-10-16',start:540,end:570,text:'Previous',category:'cat-0',project:'p-1'}),entry({date:'2026-10-16',start:570,end:600,text:'Existing',category:'cat-1',project:'p-2'})));
+ processUpdate(db,callback(99032,'r:'+id),at.getTime());
+ const continued=db.read().workspace.entries.find(e=>e.start===570);
+ assert.equal(continued.category,'cat-1');assert.equal(continued.project,'p-2');assert.match(continued.text,/Previous/);
+});
