@@ -1,6 +1,10 @@
 // Translation is applied only to authored strings and template fragments.
 // Interpolated journal data is never scanned, translated or used as markup.
 export const translations = {
+ "Заполнено за день":"Day filled",
+ "окна учёта за день":"of the day's tracking window",
+ "Из {0} окна учёта за день":"Of {0} in the day's tracking window",
+
  "Сон и пробуждение":"Sleep and waking",
  "Подъём · Отбой · Ночной сон":"Wake-up · Bedtime · Night sleep",
  "Таблица сводки":"Overview table",

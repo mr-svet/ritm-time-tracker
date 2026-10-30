@@ -1164,10 +1164,10 @@ export function searchTimezones(query=''){
 }
 
 // Fresh visitor data; never accepts or copies an owner's workspace.
-export function createGuestStore({at=new Date(),timezone='America/New_York',weekdaysOnly=false}={}){
+export function createGuestStore({at=new Date(),timezone='America/New_York'}={}){
  const w=emptyWorkspace(),local=localNow(timezone,at);
  w.displayName='Посетитель';w.telegram='connected';
- w.settings={...w.settings,timezone,timezoneCity:(timezone==='America/New_York'?'Нью-Йорк':TIMEZONES.find(z=>z.id===timezone)?.city)||'',start:0,end:1440,days:weekdaysOnly?[0,1,2,3,4]:w.settings.days,confirmed:true};
+ w.settings={...w.settings,timezone,timezoneCity:(timezone==='America/New_York'?'Нью-Йорк':TIMEZONES.find(z=>z.id===timezone)?.city)||'',start:0,end:1440,days:[0,1,2,3,4,5,6],confirmed:true};
  w.categories.push({id:'cat-6',name:'Творчество',color:COLORS[6],archived:false,productive:true},{id:'cat-7',name:'Еда',color:'#e99a56',archived:false,productive:false});
  w.categories.forEach(c=>{c.productive=['cat-0','cat-1','cat-6'].includes(c.id);});
  w.projects=[{id:'p-1',name:'Редизайн сайта',archived:false},{id:'p-2',name:'Изучение английского',archived:false},{id:'p-3',name:'Личный проект',archived:false}];
@@ -1179,6 +1179,12 @@ export function createGuestStore({at=new Date(),timezone='America/New_York',week
   ['Смотрел урок по дизайну','cat-1','p-3'],['Тренировка и растяжка','cat-3',''],
   ['Покупки и домашние дела','cat-4',''],['Читал перед сном','cat-2','']
  ];
+ const missingDayMark=(hash,salt)=>{
+  let value=(hash^salt)>>>0;
+  value=Math.imul(value^(value>>>16),0x45d9f3b);
+  value=Math.imul(value^(value>>>16),0x45d9f3b);
+  return ((value^(value>>>16))>>>0)%100<15;
+ };
  const firstMonth=new Date(`${local.date.slice(0,7)}-01T12:00:00Z`);firstMonth.setUTCMonth(firstMonth.getUTCMonth()-11);
  for(let date=firstMonth.toISOString().slice(0,10),d=0;date<=local.date;date=addDays(date,1),d++){
   ensureDay(w,date);w.snapshots[date]={...w.settings,start:480,end:1320};
@@ -1186,21 +1192,28 @@ export function createGuestStore({at=new Date(),timezone='America/New_York',week
   const weekend=weekday(date)>=5,lateNight=hash%9===0||hash%13===2;
   const wakeMinute=(weekend?570:435)+(hash%5)*15+(lateNight?105:0);
   const wakeAt=instantForLocal(date,clock(wakeMinute),timezone);
-  if(hash%11!==0&&wakeAt&&wakeAt<=at)w.dayEvents.push({date,type:'wake',at:wakeAt.toISOString(),timezone});
+  if(!missingDayMark(hash,0x51ed270b)&&wakeAt)w.dayEvents.push({date,type:'wake',at:wakeAt.toISOString(),timezone});
   const sleepDate=lateNight?addDays(date,1):date;
   const sleepMinute=lateNight?30+(hash%5)*30:1320+(hash%4)*30;
   const sleepAt=instantForLocal(sleepDate,clock(sleepMinute),timezone);
-  if(hash%8!==3&&sleepAt&&sleepAt<=at)w.dayEvents.push({date,type:'sleep',at:sleepAt.toISOString(),timezone});
-  const currentSlot=Math.floor(local.minute/30)*30;
-  const first=date===local.date?Math.min(currentSlot,Math.max(Math.ceil(wakeMinute/30)*30,currentSlot-270)):Math.max(wakeMinute,480+(hash%5)*30);
-  const last=date===local.date?currentSlot:960+(hash%9)*30;
-  for(let start=first,n=0;start<=last;start+=30,n++){
-   // Some days are sparse or empty; gaps are intentional, not inferred activities.
+  if(!missingDayMark(hash,0x68bc21eb)&&sleepAt)w.dayEvents.push({date,type:'sleep',at:sleepAt.toISOString(),timezone});
+  // Each date has its own mix: omitted categories remain genuinely empty in the matrix.
+  let sampleState=hash||1;
+  const sampleRandom=()=>{sampleState^=sampleState<<13;sampleState^=sampleState>>>17;sampleState^=sampleState<<5;return sampleState>>>0;};
+  const optional=['cat-0','cat-1','cat-2','cat-3','cat-4','cat-5','cat-6'];
+  for(let i=optional.length-1;i>0;i--){const j=sampleRandom()%(i+1);[optional[i],optional[j]]=[optional[j],optional[i]];}
+  const activeCategories=new Set(['cat-7',...optional.slice(0,2+sampleRandom()%4)]);
+  const dayExamples=examples.filter(([,category])=>activeCategories.has(category));
+  // Every demo date is a whole fictional day, independent of the viewing hour.
+  const first=wakeMinute,end=sleepDate===date?sleepMinute:1440;
+  w.snapshots[date]={...w.settings,start:first,end};
+  for(let start=first,n=0;start<end;start+=30,n++){
    const chance=((hash^Math.imul(n+1,0x9e3779b1))>>>0)%100;
-   const density=date===local.date?60:hash%13===0?0:hash%5===0?23:hash%3===0?43:67;
-   if(chance>=density&&!(date===local.date&&(n===0||start===currentSlot)))continue;
-   const [text,category,project]=date===local.date&&start<wakeMinute?['Отдыхал перед сном','cat-2','']:examples[(n*5+hash)%examples.length];
-   const e={id:`sample-${date}-${n}`,date,start,end:Math.min(start+30,1440),text,category,project,source:n%3===0?'telegram-demo':'site'};
+   const density=76+hash%15;
+   // Keep the first and last intervals populated; scatter short gaps inside the day.
+   if(chance>=density&&n!==0&&start+30<end)continue;
+   const [text,category,project]=dayExamples[sampleRandom()%dayExamples.length];
+   const e={id:`sample-${date}-${n}`,date,start,end:Math.min(start+30,end),text,category,project,source:n%3===0?'telegram-demo':'site'};
    if(n%8===2){e.activities=[{id:`sample-activity-${date}-${n}-1`,text,at:new Date(`${date}T00:00:00Z`).toISOString()},{id:`sample-activity-${date}-${n}-2`,text:'Сделал короткий перерыв',at:null}];e.text=activityPreview(e.activities);}
    w.entries.push(e);
   }

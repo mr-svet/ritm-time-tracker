@@ -61,7 +61,7 @@ test('every guest demo starts fresh and contains no personal workspace or previo
  const first=createGuestStore();assert.equal(first.mode,'demo');assert.equal(first.workspaces.user.entries.length,0);first.workspaces.demo.entries[0].text='TEMPORARY_EDIT';first.workspaces.demo.categories[0].name='TEMPORARY_CATEGORY';
  const second=createGuestStore();assert.ok(!JSON.stringify(second).includes('TEMPORARY_EDIT'));assert.ok(!JSON.stringify(second).includes('TEMPORARY_CATEGORY'));assert.equal(second.workspaces.demo.displayName,'Посетитель');assert.ok(second.workspaces.demo.categories.some(c=>c.productive));
 });
-test('visitor demo has plausible wake and bedtime marks, missed marks and no future events',()=>{
+test('visitor demo has plausible full-day wake and bedtime marks, including fictional events later today',()=>{
  const at=new Date('2026-10-21T12:00:00Z'),w=createGuestStore({at,timezone:'UTC'}).workspaces.demo;
  assert.equal(validateWorkspace(w),true);
  const dates=new Set(w.dayEvents.map(e=>e.date));
@@ -70,7 +70,7 @@ test('visitor demo has plausible wake and bedtime marks, missed marks and no fut
  assert.ok([...dates].some(date=>!w.dayEvents.some(e=>e.date===date&&e.type==='sleep')));
  assert.ok(w.dayEvents.some(e=>e.type==='sleep'&&localNow(e.timezone,new Date(e.at)).date===addDays(e.date,1)));
  assert.ok(w.dayEvents.some(e=>e.type==='wake'&&localNow(e.timezone,new Date(e.at)).minute>=600));
- assert.ok(w.dayEvents.every(e=>new Date(e.at)<=at));
+ assert.ok(w.dayEvents.some(e=>e.date==='2026-10-21'&&e.type==='sleep'&&new Date(e.at)>at));
  assert.ok(w.entries.every(e=>e.date<='2026-10-21'));
 });
 test('visitor sees examples today and across all twelve rolling months in their time zone',()=>{
@@ -84,9 +84,48 @@ test('visitor sees examples today and across all twelve rolling months in their 
   const today=localNow(timezone,new Date(at));
   const entries=w.entries.filter(e=>e.date===today.date);
   assert.ok(entries.length>0,`${timezone}: today is empty`);
-  assert.ok(entries.some(e=>e.start<=today.minute&&e.end>today.minute),`${timezone}: current interval is empty`);
+  assert.equal(entries[0].start,w.snapshots[today.date].start);
+  assert.equal(entries.at(-1).end,w.snapshots[today.date].end);
   assert.ok(w.entries.every(e=>e.date<=today.date),`${timezone}: future date present`);
   assert.equal(new Set(w.entries.map(e=>e.date.slice(0,7))).size,12,`${timezone}: missing demo month`);
   assert.equal(validateWorkspace(w),true);
  }
+});
+
+test('visitor days keep the same full contents at different hours and on weekends',()=>{
+ const make=hour=>createGuestStore({at:new Date(`2026-10-24T${hour}:05:00Z`),timezone:'UTC',weekdaysOnly:true}).workspaces.demo;
+ const morning=make('00'),evening=make('23');
+ assert.deepEqual(morning.entries,evening.entries);
+ assert.deepEqual(morning.dayEvents,evening.dayEvents);
+ assert.deepEqual(morning.snapshots,evening.snapshots);
+ const byDate=new Map();for(const entry of morning.entries){if(!byDate.has(entry.date))byDate.set(entry.date,[]);byDate.get(entry.date).push(entry);}
+ for(const [date,bounds] of Object.entries(morning.snapshots)){
+  const entries=byDate.get(date);assert.ok(entries.length>=10,date);
+  assert.equal(entries[0].start,bounds.start,date);assert.equal(entries.at(-1).end,bounds.end,date);
+  assert.ok(entries.every((entry,i)=>entry.end<=bounds.end&&(!i||entries[i-1].end<=entry.start)),date);
+ }
+ assert.ok([...byDate.values()].some(entries=>entries.some((entry,i)=>i&&entries[i-1].end<entry.start)));
+});
+
+test('visitor overview has varied category mixes and genuine empty cells',()=>{
+ const w=createGuestStore({at:new Date('2026-10-30T12:00:00Z'),timezone:'UTC'}).workspaces.demo;
+ const days=new Map();for(const entry of w.entries){if(!days.has(entry.date))days.set(entry.date,new Set());days.get(entry.date).add(entry.category);}
+ assert.ok([...days.values()].every(categories=>categories.size<=6));
+ for(const category of ['cat-0','cat-1','cat-2','cat-3','cat-4','cat-5','cat-6']){
+  assert.ok([...days.values()].some(categories=>!categories.has(category)),category+' should have empty dates');
+  assert.ok([...days.values()].some(categories=>categories.has(category)),category+' should have populated dates');
+ }
+ assert.ok(new Set([...days.values()].map(categories=>[...categories].sort().join(','))).size>20);
+});
+
+test('visitor wake and bedtime each have about fifteen percent independent missing marks',()=>{
+ const w=createGuestStore({at:new Date('2026-10-30T12:00:00Z'),timezone:'UTC'}).workspaces.demo;
+ const dates=Object.keys(w.snapshots),marks=new Set(w.dayEvents.map(event=>event.date+'|'+event.type));
+ for(const type of ['wake','sleep']){
+  const fraction=dates.filter(date=>!marks.has(date+'|'+type)).length/dates.length;
+  assert.ok(fraction>=.10&&fraction<=.20,`${type}: ${fraction}`);
+ }
+ assert.ok(dates.some(date=>!marks.has(date+'|wake')&&marks.has(date+'|sleep')));
+ assert.ok(dates.some(date=>marks.has(date+'|wake')&&!marks.has(date+'|sleep')));
+ assert.ok(dates.some(date=>!marks.has(date+'|wake')&&!marks.has(date+'|sleep')));
 });
